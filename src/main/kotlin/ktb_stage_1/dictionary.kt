@@ -9,6 +9,13 @@ data class Word(
     var correctAnswersCount: Int = 0
 )
 
+fun File.writeToLowercaseToBeginning(text: String) {
+    val resultText = text.lowercase(Locale.getDefault())
+    val originalText = this.readText()
+
+    this.writeText(resultText + "\n" + originalText)
+}
+
 fun main() {
 
     val wordFile = File("words.txt")
@@ -35,11 +42,4 @@ fun main() {
     }
 
     dictionary.forEach{ println(it) }
-}
-
-fun File.writeToLowercaseToBeginning(text: String) {
-    val resultText = text.lowercase(Locale.getDefault())
-    val originalText = this.readText()
-
-    this.writeText(resultText + "\n" + originalText)
 }
