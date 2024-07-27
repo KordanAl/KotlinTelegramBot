@@ -1,33 +1,41 @@
 package ktb_stage_1
 
 import java.io.File
-import java.util.*
+
+const val ANSI_BLUE = "\u001B[34m"
+const val ANSI_GREEN = "\u001B[32m"
+const val ANSI_YELLOW = "\u001B[33m"
+const val ANSI_RESET = "\u001B[0m"
 
 data class Word(
     val original: String,
     val translate: String,
-    var correctAnswersCount: Int = 0
-)
+    var correctAnswersCount: Int = 0,
+) {
+    private val upOriginal: String
+        get() = original.replaceFirstChar { it.uppercase() }
 
-fun File.writeToLowercaseToBeginning(text: String) {
-    val resultText = text.lowercase(Locale.getDefault())
-    val originalText = this.readText()
+    private val upTranslate: String
+        get() = translate.replaceFirstChar { it.uppercase() }
 
-    this.writeText(resultText + "\n" + originalText)
+    override fun toString(): String {
+        return "Для слова $ANSI_YELLOW$upOriginal$ANSI_RESET" +
+                " правильный перевод $ANSI_GREEN$upTranslate$ANSI_RESET," +
+                " правильных ответов: $ANSI_BLUE$correctAnswersCount$ANSI_RESET"
+    }
 }
 
 fun main() {
 
     val wordFile = File("words.txt")
 
-    // Тестовые данные для первого запуска
-//    wordFile.createNewFile()
-//    wordFile.writeToLowercaseToBeginning(
-//        "hello|привет|0\n" +
-//                "dog|собака|\n" +
-//                "cat|кошка|3"
-//    )
-    // наш будущий словарь
+    if (!wordFile.exists()) {
+        wordFile.createNewFile()
+        wordFile.writeText("hello|привет|0\n")
+        wordFile.appendText("dog|собака|\n")
+        wordFile.appendText("cat|кошка|3")
+    }
+
     val dictionary: MutableList<Word> = mutableListOf()
 
     val lines: List<String> = wordFile.readLines()
@@ -41,5 +49,5 @@ fun main() {
         dictionary.add(word)
     }
 
-    dictionary.forEach{ println(it) }
+    dictionary.forEach { println(it) }
 }
