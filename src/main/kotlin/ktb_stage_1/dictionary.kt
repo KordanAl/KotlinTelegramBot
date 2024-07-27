@@ -27,7 +27,7 @@ data class Word(
     }
 }
 
-fun File.checkingAndCreatingFile() {
+private fun File.checkingAndCreatingFile() {
     if (!exists()) {
         createNewFile()
         writeText("hello|привет|0\n")
@@ -75,7 +75,7 @@ private fun showMenu(dictionary: List<Word>) {
     }
 }
 
-fun showStatisticInfo(dictionary: List<Word>) {
+private fun showStatisticInfo(dictionary: List<Word>) {
     val learnedWords = dictionary.filter { it.correctAnswersCount >= 3 }
     val learnedCount = learnedWords.size
     val totalCount = dictionary.size
