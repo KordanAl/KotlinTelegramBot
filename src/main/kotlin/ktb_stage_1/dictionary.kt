@@ -7,6 +7,8 @@ const val ANSI_GREEN = "\u001B[32m"
 const val ANSI_YELLOW = "\u001B[33m"
 const val ANSI_RESET = "\u001B[0m"
 
+const val ONE_HUNDRED_PERCENT = 100
+
 data class Word(
     val original: String,
     val translate: String,
@@ -25,23 +27,47 @@ data class Word(
     }
 }
 
-private fun showMenu() {
+private fun showMenu(dictionary: List<Word>) {
     while (true) {
-        println("""
+        println(
+            """
         Меню:
         1 - учить слова
         2 - Статистика
         0 - Выход
         Введите необходимое значение:
-    """.trimIndent())
+    """.trimIndent()
+        )
 
         when (val input: Int? = readln().toIntOrNull()) {
             1 -> println("Вы ввели $input")
-            2 -> println("Вы ввели $input")
+            2 -> {
+                val learnedWords = dictionary.filter { it.correctAnswersCount >= 3 }
+                val learnedCount = learnedWords.size
+                val totalCount = dictionary.size
+                val percentage = if (totalCount > 0) {
+                    (learnedCount.toDouble() / totalCount * ONE_HUNDRED_PERCENT).toInt()
+                } else {
+                    0
+                }
+                println("Вы выучили $learnedCount из $totalCount слов | $percentage%")
+
+                while (true) {
+                    println("Чтобы выйти в главное меню введите 0:")
+                    val inputStatistic: Int? = readln().toIntOrNull()
+                    if (inputStatistic == 0) {
+                        break
+                    } else {
+                        println("Такого раздела нет в меню, попробуйте ввести корректное значение!")
+                    }
+                }
+            }
+
             0 -> {
-                println("Вы ввели $input")
+                println("Вы вышли из тренажера!")
                 break
             }
+
             else -> println("Такого раздела нет в меню, попробуйте ввести корректное значение!")
         }
         Thread.sleep(1000)
@@ -55,7 +81,7 @@ fun main() {
     if (!wordFile.exists()) {
         wordFile.createNewFile()
         wordFile.writeText("hello|привет|0\n")
-        wordFile.appendText("dog|собака|\n")
+        wordFile.appendText("dog|собака|3\n")
         wordFile.appendText("cat|кошка|3")
     }
 
@@ -72,5 +98,6 @@ fun main() {
         dictionary.add(word)
     }
 
-    showMenu()
+    showMenu(dictionary)
 }
+
