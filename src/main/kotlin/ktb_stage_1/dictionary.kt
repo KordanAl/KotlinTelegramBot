@@ -25,6 +25,29 @@ data class Word(
     }
 }
 
+private fun showMenu() {
+    while (true) {
+        println("""
+        Меню:
+        1 - учить слова
+        2 - Статистика
+        0 - Выход
+        Введите необходимое значение:
+    """.trimIndent())
+
+        when (val input: Int? = readln().toIntOrNull()) {
+            1 -> println("Вы ввели $input")
+            2 -> println("Вы ввели $input")
+            0 -> {
+                println("Вы ввели $input")
+                break
+            }
+            else -> println("Такого раздела нет в меню, попробуйте ввести корректное значение!")
+        }
+        Thread.sleep(1000)
+    }
+}
+
 fun main() {
 
     val wordFile = File("words.txt")
@@ -49,5 +72,5 @@ fun main() {
         dictionary.add(word)
     }
 
-    dictionary.forEach { println(it) }
+    showMenu()
 }
