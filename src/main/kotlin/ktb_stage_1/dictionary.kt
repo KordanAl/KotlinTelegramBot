@@ -8,6 +8,7 @@ const val ANSI_YELLOW = "\u001B[33m"
 const val ANSI_RESET = "\u001B[0m"
 
 const val ONE_HUNDRED_PERCENT = 100
+const val ZERO_NUMBER = 0
 
 data class Word(
     val original: String,
@@ -42,7 +43,7 @@ private fun runFileParsing(wordFile: File, dictionary: MutableList<Word>) {
         val line = it.split("|")
         val original = line[0]
         val translate = line[1]
-        val intCorrectAnswersCount = line.getOrNull(2)?.toIntOrNull() ?: 0
+        val intCorrectAnswersCount = line.getOrNull(2)?.toIntOrNull() ?: ZERO_NUMBER
 
         val word = Word(original = original, translate = translate, correctAnswersCount = intCorrectAnswersCount)
         dictionary.add(word)
@@ -68,7 +69,6 @@ private fun showMenu(dictionary: List<Word>) {
                 println("Вы вышли из тренажера!")
                 break
             }
-
             else -> println("Такого раздела нет в меню, попробуйте ввести корректное значение!")
         }
         Thread.sleep(1000)
@@ -76,16 +76,15 @@ private fun showMenu(dictionary: List<Word>) {
 }
 
 private fun showStatisticInfo(dictionary: List<Word>) {
-    val learnedWords = dictionary.filter { it.correctAnswersCount >= 3 }
-    val learnedCount = learnedWords.size
+    val learnedCount = getTheNumberOfWordsLearned(dictionary)
     val totalCount = dictionary.size
-    val percentage = if (totalCount > 0) {
-        (learnedCount.toDouble() / totalCount * ONE_HUNDRED_PERCENT).toInt()
-    } else {
-        0
-    }
-    println("Вы выучили $learnedCount из $totalCount слов | $percentage%")
+    val percentageOfWordsLearned: Int = getPercentageFromTwoNumbers(learnedCount, totalCount)
+    println("Вы выучили $learnedCount из $totalCount слов | $percentageOfWordsLearned%")
 
+    returnToMainMenu()
+}
+
+private fun returnToMainMenu() {
     while (true) {
         println("Чтобы выйти в главное меню введите 0:")
         val inputStatistic: Int? = readln().toIntOrNull()
@@ -96,6 +95,16 @@ private fun showStatisticInfo(dictionary: List<Word>) {
         }
     }
 }
+
+private fun getPercentageFromTwoNumbers(learnedCount: Int, totalCount: Int): Int =
+    if (totalCount > ZERO_NUMBER) {
+        (learnedCount.toDouble() / totalCount * ONE_HUNDRED_PERCENT).toInt()
+    } else {
+        ZERO_NUMBER
+    }
+
+private fun getTheNumberOfWordsLearned(dictionary: List<Word>) =
+    dictionary.filter { it.correctAnswersCount >= 3 }.size
 
 fun main() {
 
