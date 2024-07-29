@@ -7,8 +7,9 @@ const val ANSI_GREEN = "\u001B[32m"
 const val ANSI_YELLOW = "\u001B[33m"
 const val ANSI_RESET = "\u001B[0m"
 
-const val ONE_HUNDRED_PERCENT = 100
-const val ZERO_NUMBER = 0
+private const val ONE_HUNDRED_PERCENT = 100
+private const val ZERO_NUMBER = 0
+private const val MAXIMUM_VALUE_OF_A_LEARNED_WORD = 3
 
 data class Word(
     val original: String,
@@ -28,12 +29,12 @@ data class Word(
     }
 }
 
-private fun File.checkingAndCreatingFile() {
-    if (!exists()) {
-        createNewFile()
-        writeText("hello|привет|0\n")
-        appendText("dog|собака|3\n")
-        appendText("cat|кошка|3")
+private fun checkingAndCreatingFile(file: File) {
+    if (!file.exists()) {
+        file.createNewFile()
+        file.writeText("hello|привет|0\n")
+        file.appendText("dog|собака|3\n")
+        file.appendText("cat|кошка|3")
     }
 }
 
@@ -69,6 +70,7 @@ private fun showMenu(dictionary: List<Word>) {
                 println("Вы вышли из тренажера!")
                 break
             }
+
             else -> println("Такого раздела нет в меню, попробуйте ввести корректное значение!")
         }
         Thread.sleep(1000)
@@ -80,21 +82,8 @@ private fun showStatisticInfo(dictionary: List<Word>) {
     val totalCount = dictionary.size
     val percentageOfWordsLearned: Int = getPercentageFromTwoNumbers(learnedCount, totalCount)
     println("Вы выучили $learnedCount из $totalCount слов | $percentageOfWordsLearned%")
-
-    returnToMainMenu()
 }
 
-private fun returnToMainMenu() {
-    while (true) {
-        println("Чтобы выйти в главное меню введите 0:")
-        val inputStatistic: Int? = readln().toIntOrNull()
-        if (inputStatistic == 0) {
-            break
-        } else {
-            println("Такого раздела нет в меню, попробуйте ввести корректное значение!")
-        }
-    }
-}
 
 private fun getPercentageFromTwoNumbers(learnedCount: Int, totalCount: Int): Int =
     if (totalCount > ZERO_NUMBER) {
@@ -104,12 +93,11 @@ private fun getPercentageFromTwoNumbers(learnedCount: Int, totalCount: Int): Int
     }
 
 private fun getTheNumberOfWordsLearned(dictionary: List<Word>) =
-    dictionary.filter { it.correctAnswersCount >= 3 }.size
+    dictionary.filter { it.correctAnswersCount >= MAXIMUM_VALUE_OF_A_LEARNED_WORD }.size
 
 fun main() {
-
     val wordFile = File("words.txt")
-    wordFile.checkingAndCreatingFile()
+    checkingAndCreatingFile(wordFile)
 
     val dictionary: MutableList<Word> = mutableListOf()
     runFileParsing(wordFile, dictionary)
