@@ -8,8 +8,7 @@ const val ANSI_YELLOW = "\u001B[33m"
 const val ANSI_RESET = "\u001B[0m"
 
 private const val ONE_HUNDRED_PERCENT = 100
-private const val ZERO_NUMBER = 0
-private const val MAXIMUM_VALUE_OF_A_LEARNED_WORD = 3
+private const val MAX_VALUE_LEARNED_WORD = 3
 
 data class Word(
     val original: String,
@@ -44,7 +43,7 @@ private fun runFileParsing(wordFile: File, dictionary: MutableList<Word>) {
         val line = it.split("|")
         val original = line[0]
         val translate = line[1]
-        val intCorrectAnswersCount = line.getOrNull(2)?.toIntOrNull() ?: ZERO_NUMBER
+        val intCorrectAnswersCount = line.getOrNull(2)?.toIntOrNull() ?: 0
 
         val word = Word(original = original, translate = translate, correctAnswersCount = intCorrectAnswersCount)
         dictionary.add(word)
@@ -78,22 +77,12 @@ private fun showMenu(dictionary: List<Word>) {
 }
 
 private fun showStatisticInfo(dictionary: List<Word>) {
-    val learnedCount = getTheNumberOfWordsLearned(dictionary)
-    val totalCount = dictionary.size
-    val percentageOfWordsLearned: Int = getPercentageFromTwoNumbers(learnedCount, totalCount)
-    println("Вы выучили $learnedCount из $totalCount слов | $percentageOfWordsLearned%")
+    val wordsLearned: Int = dictionary.filter { it.correctAnswersCount >= MAX_VALUE_LEARNED_WORD }.size
+    val allWords: Int = dictionary.size
+    val percentOfWordsLearned: Int = (wordsLearned.toDouble() / allWords * ONE_HUNDRED_PERCENT).toInt()
+
+    println("Вы выучили $wordsLearned из $allWords слов | $percentOfWordsLearned%")
 }
-
-
-private fun getPercentageFromTwoNumbers(learnedCount: Int, totalCount: Int): Int =
-    if (totalCount > ZERO_NUMBER) {
-        (learnedCount.toDouble() / totalCount * ONE_HUNDRED_PERCENT).toInt()
-    } else {
-        ZERO_NUMBER
-    }
-
-private fun getTheNumberOfWordsLearned(dictionary: List<Word>) =
-    dictionary.filter { it.correctAnswersCount >= MAXIMUM_VALUE_OF_A_LEARNED_WORD }.size
 
 fun main() {
     val wordFile = File("words.txt")
