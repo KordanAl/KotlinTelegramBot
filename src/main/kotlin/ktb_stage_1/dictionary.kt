@@ -96,8 +96,8 @@ private fun learningWords(dictionary: List<Word>) {
         } else {
             val randomWordToLearn: Word = listOfUnlearnedWords.random()
             val correctTranslateWords: String = randomWordToLearn.translate.replaceFirstChar { it.uppercase() }
-            val answerOptions: List<Any> = listOfUnlearnedWords.shuffled().take(3)
-                .map { word -> word.translate.replaceFirstChar { it.uppercase() } } + correctTranslateWords
+            val answerOptions: List<Any> = (listOfUnlearnedWords.shuffled().take(3)
+                .map { word -> word.translate.replaceFirstChar { it.uppercase() } } + correctTranslateWords).shuffled()
 
             println("Слово: ${randomWordToLearn.original}, выбери варианты ответов:")
             answerOptions.forEachIndexed { index, word ->
