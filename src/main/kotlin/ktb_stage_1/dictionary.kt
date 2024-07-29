@@ -95,17 +95,18 @@ private fun learningWords(dictionary: List<Word>) {
             break
         } else {
             val randomWordToLearn: Word = listOfUnlearnedWords.random()
-            val correctTranslateWords: String = randomWordToLearn.translate.replaceFirstChar { it.uppercase() }
-            val answerOptions: List<Any> = (
-                    listOfUnlearnedWords
-                        .filter { it != randomWordToLearn }
-                        .shuffled()
-                        .take(3)
-                        .map { word ->
-                            word.translate.replaceFirstChar { it.uppercase() }
-                        } + correctTranslateWords).shuffled()
 
-            println("Слово: ${randomWordToLearn.original}, выбери варианты ответов:")
+            val currentWordToLearn: String = randomWordToLearn.original.replaceFirstChar { it.uppercase() }
+            val currentWordToTranslate: String = randomWordToLearn.translate.replaceFirstChar { it.uppercase() }
+
+            val answerOptions: List<String> = (listOfUnlearnedWords
+                .filter { it != randomWordToLearn }
+                .shuffled()
+                .take(3)
+                .map { word -> word.translate.replaceFirstChar { it.uppercase() } } + currentWordToTranslate)
+                .shuffled()
+
+            println("Слово: $currentWordToLearn, выбери один из вариантов:")
             answerOptions.forEachIndexed { index, word ->
                 println("${index + 1}. $word")
             }
