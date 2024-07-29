@@ -32,8 +32,18 @@ private fun checkingAndCreatingFile(file: File) {
     if (!file.exists()) {
         file.createNewFile()
         file.writeText("hello|привет|0\n")
-        file.appendText("dog|собака|3\n")
-        file.appendText("cat|кошка|3")
+        file.appendText("dog|собака|0\n")
+        file.appendText("bird|птица|0\n")
+        file.appendText("tree|дерево|0\n")
+        file.appendText("book|книга|0\n")
+        file.appendText("car|машина|0\n")
+        file.appendText("house|дом|0\n")
+        file.appendText("water|вода|0\n")
+        file.appendText("sun|солнце|0\n")
+        file.appendText("moon|луна|0\n")
+        file.appendText("flower|цветок|0\n")
+        file.appendText("friend|друг|0\n")
+        file.appendText("cat|кошка|0")
     }
 }
 
@@ -50,7 +60,7 @@ private fun runFileParsing(wordFile: File, dictionary: MutableList<Word>) {
     }
 }
 
-private fun showMenu(dictionary: List<Word>) {
+private fun showScreenMenu(dictionary: List<Word>) {
     while (true) {
         println(
             """
@@ -62,8 +72,8 @@ private fun showMenu(dictionary: List<Word>) {
     """.trimIndent()
         )
 
-        when (val input: Int? = readln().toIntOrNull()) {
-            1 -> println("Вы ввели $input")
+        when (readln().toIntOrNull()) {
+            1 -> learningWords(dictionary)
             2 -> showStatisticInfo(dictionary)
             0 -> {
                 println("Вы вышли из тренажера!")
@@ -74,6 +84,31 @@ private fun showMenu(dictionary: List<Word>) {
         }
         Thread.sleep(1000)
     }
+}
+
+private fun learningWords(dictionary: List<Word>) {
+    do {
+        val listOfUnlearnedWords = dictionary.filter { it.correctAnswersCount < MAX_VALUE_LEARNED_WORD }
+
+        if (listOfUnlearnedWords.isEmpty()) {
+            println("Все слова выучены!")
+            break
+        } else {
+            val randomWordToLearn: Word = listOfUnlearnedWords.random()
+            val correctTranslateWords: String = randomWordToLearn.translate.replaceFirstChar { it.uppercase() }
+            val answerOptions: List<Any> = listOfUnlearnedWords.shuffled().take(3)
+                .map { word -> word.translate.replaceFirstChar { it.uppercase() } } + correctTranslateWords
+
+            println("Слово: ${randomWordToLearn.original}, выбери варианты ответов:")
+            answerOptions.forEachIndexed { index, word ->
+                println("${index + 1}. $word")
+            }
+            println("0. Выход")
+
+            val inputNumber: Int? = readln().toIntOrNull()
+            if (inputNumber == null || inputNumber == 0) break
+        }
+    } while (true)
 }
 
 private fun showStatisticInfo(dictionary: List<Word>) {
@@ -88,8 +123,9 @@ fun main() {
     val wordFile = File("words.txt")
     checkingAndCreatingFile(wordFile)
 
+
     val dictionary: MutableList<Word> = mutableListOf()
     runFileParsing(wordFile, dictionary)
 
-    showMenu(dictionary)
+    showScreenMenu(dictionary)
 }
