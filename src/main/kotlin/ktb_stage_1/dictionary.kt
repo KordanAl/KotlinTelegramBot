@@ -7,6 +7,9 @@ const val ANSI_GREEN = "\u001B[32m"
 const val ANSI_YELLOW = "\u001B[33m"
 const val ANSI_RESET = "\u001B[0m"
 
+private const val ONE_HUNDRED_PERCENT = 100
+private const val MAX_VALUE_LEARNED_WORD = 3
+
 data class Word(
     val original: String,
     val translate: String,
@@ -25,42 +28,16 @@ data class Word(
     }
 }
 
-private fun showMenu() {
-    while (true) {
-        println("""
-        Меню:
-        1 - учить слова
-        2 - Статистика
-        0 - Выход
-        Введите необходимое значение:
-    """.trimIndent())
-
-        when (val input: Int? = readln().toIntOrNull()) {
-            1 -> println("Вы ввели $input")
-            2 -> println("Вы ввели $input")
-            0 -> {
-                println("Вы ввели $input")
-                break
-            }
-            else -> println("Такого раздела нет в меню, попробуйте ввести корректное значение!")
-        }
-        Thread.sleep(1000)
+private fun checkingAndCreatingFile(file: File) {
+    if (!file.exists()) {
+        file.createNewFile()
+        file.writeText("hello|привет|0\n")
+        file.appendText("dog|собака|3\n")
+        file.appendText("cat|кошка|3")
     }
 }
 
-fun main() {
-
-    val wordFile = File("words.txt")
-
-    if (!wordFile.exists()) {
-        wordFile.createNewFile()
-        wordFile.writeText("hello|привет|0\n")
-        wordFile.appendText("dog|собака|\n")
-        wordFile.appendText("cat|кошка|3")
-    }
-
-    val dictionary: MutableList<Word> = mutableListOf()
-
+private fun runFileParsing(wordFile: File, dictionary: MutableList<Word>) {
     val lines: List<String> = wordFile.readLines()
     for (it in lines) {
         val line = it.split("|")
@@ -71,6 +48,48 @@ fun main() {
         val word = Word(original = original, translate = translate, correctAnswersCount = intCorrectAnswersCount)
         dictionary.add(word)
     }
+}
 
-    showMenu()
+private fun showMenu(dictionary: List<Word>) {
+    while (true) {
+        println(
+            """
+        Меню:
+        1 - учить слова
+        2 - Статистика
+        0 - Выход
+        Введите необходимое значение:
+    """.trimIndent()
+        )
+
+        when (val input: Int? = readln().toIntOrNull()) {
+            1 -> println("Вы ввели $input")
+            2 -> showStatisticInfo(dictionary)
+            0 -> {
+                println("Вы вышли из тренажера!")
+                break
+            }
+
+            else -> println("Такого раздела нет в меню, попробуйте ввести корректное значение!")
+        }
+        Thread.sleep(1000)
+    }
+}
+
+private fun showStatisticInfo(dictionary: List<Word>) {
+    val wordsLearned: Int = dictionary.filter { it.correctAnswersCount >= MAX_VALUE_LEARNED_WORD }.size
+    val allWords: Int = dictionary.size
+    val percentOfWordsLearned: Int = (wordsLearned.toDouble() / allWords * ONE_HUNDRED_PERCENT).toInt()
+
+    println("Вы выучили $wordsLearned из $allWords слов | $percentOfWordsLearned%")
+}
+
+fun main() {
+    val wordFile = File("words.txt")
+    checkingAndCreatingFile(wordFile)
+
+    val dictionary: MutableList<Word> = mutableListOf()
+    runFileParsing(wordFile, dictionary)
+
+    showMenu(dictionary)
 }
