@@ -65,7 +65,7 @@ private fun showScreenMenu(dictionary: List<Word>) {
         println(
             """
         Меню:
-        1 - учить слова
+        1 - Учить слова
         2 - Статистика
         0 - Выход
         Введите необходимое значение:
@@ -99,17 +99,18 @@ private fun learningWords(dictionary: List<Word>) {
             val currentWordToLearn: String = randomWordToLearn.original.replaceFirstChar { it.uppercase() }
             val currentWordToTranslate: String = randomWordToLearn.translate.replaceFirstChar { it.uppercase() }
 
-            val answerOptions: List<String> = (listOfUnlearnedWords
+            val answerOptions: List<String> = (dictionary
                 .filter { it != randomWordToLearn }
                 .shuffled()
                 .take(3)
                 .map { word -> word.translate.replaceFirstChar { it.uppercase() } } + currentWordToTranslate)
                 .shuffled()
 
-            println("Слово: $currentWordToLearn, выбери один из вариантов:")
-            answerOptions.forEachIndexed { index, word ->
-                println("${index + 1}. $word")
-            }
+            println(currentWordToLearn)
+            val outputAnswers: String = answerOptions.mapIndexed { index, word ->
+                "${index + 1} - $word"
+            }.joinToString(", ")
+            println(outputAnswers)
             println("0. Выход")
 
             val inputNumber: Int? = readln().toIntOrNull()
