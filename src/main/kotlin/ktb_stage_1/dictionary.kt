@@ -28,22 +28,26 @@ data class Word(
     }
 }
 
-private fun checkingAndCreatingFile(file: File) {
+private fun creatingFileAndFillingItWithBasicWords(file: File) {
     if (!file.exists()) {
         file.createNewFile()
-        file.writeText("hello|привет|0\n")
-        file.appendText("dog|собака|0\n")
-        file.appendText("bird|птица|0\n")
-        file.appendText("tree|дерево|0\n")
-        file.appendText("book|книга|0\n")
-        file.appendText("car|машина|0\n")
-        file.appendText("house|дом|0\n")
-        file.appendText("water|вода|0\n")
-        file.appendText("sun|солнце|0\n")
-        file.appendText("moon|луна|0\n")
-        file.appendText("flower|цветок|0\n")
-        file.appendText("friend|друг|0\n")
-        file.appendText("cat|кошка|0")
+
+        val baseWords = listOf(
+            "hello|привет|0",
+            "dog|собака|0",
+            "bird|птица|0",
+            "tree|дерево|0",
+            "book|книга|0",
+            "car|машина|0",
+            "house|дом|0",
+            "water|вода|0",
+            "sun|солнце|0",
+            "moon|луна|0",
+            "flower|цветок|0",
+            "friend|друг|0",
+            "cat|кошка|0"
+        )
+        file.writeText(baseWords.joinToString("\n"))
     }
 }
 
@@ -129,8 +133,7 @@ private fun showStatisticInfo(dictionary: List<Word>) {
 
 fun main() {
     val wordFile = File("words.txt")
-    checkingAndCreatingFile(wordFile)
-
+    creatingFileAndFillingItWithBasicWords(wordFile)
 
     val dictionary: MutableList<Word> = mutableListOf()
     runFileParsing(wordFile, dictionary)
