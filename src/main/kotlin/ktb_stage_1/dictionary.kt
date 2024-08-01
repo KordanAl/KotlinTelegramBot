@@ -37,15 +37,16 @@ private fun creatingFileAndFillingItWithBasicWords(file: File) {
 }
 
 private fun runFileParsing(wordFile: File, dictionary: MutableList<Word>) {
-    val lines: List<String> = wordFile.readLines()
-    for (it in lines) {
-        val line = it.split("|")
-        val original = line[0]
-        val translate = line[1]
-        val intCorrectAnswersCount = line.getOrNull(2)?.toIntOrNull() ?: 0
-
-        val word = Word(original = original, translate = translate, correctAnswersCount = intCorrectAnswersCount)
-        dictionary.add(word)
+    try {
+        val lines = wordFile.readLines()
+        lines.map { it.split("|") }.forEach {
+            val original = it[0]
+            val translate = it[1]
+            val correctAnswersCount = it.getOrNull(2)?.toIntOrNull() ?: 0
+            dictionary.add(Word(original, translate, correctAnswersCount))
+        }
+    } catch (e: Exception) {
+        println("Ошибка чтения файла: ${e::class.simpleName}")
     }
 }
 
@@ -55,33 +56,28 @@ private fun String.capitalize(): String {
 
 private fun getAnswerOptions(
     dictionary: List<Word>,
-    listOfUnlearnedWords: List<Word>,
-    randomObjectWordToLearn: Word,
-    translateOriginalWordToLearn: String,
+    unlearnedWords: List<Word>,
+    wordToLearn: Word,
 ): List<String> {
-    val allAnswerWordsOptions = mutableSetOf<String>().apply {
-        add(translateOriginalWordToLearn)
-        addAll(
-            listOfUnlearnedWords
-                .filter { it != randomObjectWordToLearn }
-                .shuffled()
-                .take(FOUR_WORDS_FOR_ANSWER_OPTIONS - 1)
-                .map { it.translate.capitalize() }
-                .toMutableSet()
-        )
-    }
+    val allOptions = mutableSetOf(wordToLearn.translate.capitalize())
+    allOptions.addAll(
+        unlearnedWords
+            .filter { it != wordToLearn }
+            .shuffled()
+            .take(FOUR_WORDS_FOR_ANSWER_OPTIONS - 1)
+            .map { it.translate.capitalize() }
+    )
 
-    if (allAnswerWordsOptions.size < FOUR_WORDS_FOR_ANSWER_OPTIONS) {
-        val additionalAnswerOptions = dictionary
+    if (allOptions.size < FOUR_WORDS_FOR_ANSWER_OPTIONS) {
+        val additionalOptions = dictionary
             .filter { it.correctAnswersCount == MAX_VALUE_LEARNED_WORD }
             .map { it.translate.capitalize() }
-            .filterNot { allAnswerWordsOptions.contains(it) }
+            .filterNot { allOptions.contains(it) }
             .shuffled()
-            .take(FOUR_WORDS_FOR_ANSWER_OPTIONS - allAnswerWordsOptions.size)
-
-        allAnswerWordsOptions.addAll(additionalAnswerOptions)
+            .take(FOUR_WORDS_FOR_ANSWER_OPTIONS - allOptions.size)
+        allOptions.addAll(additionalOptions)
     }
-    return allAnswerWordsOptions.toList().shuffled()
+    return allOptions.shuffled().toList()
 }
 
 private fun showAnswersWorldOptions(allAnswerWordsOptions: List<String>) =
@@ -124,42 +120,38 @@ private fun showStartMenuText() {
 
 private fun showLearningWords(dictionary: List<Word>) {
     metka@ do {
-        val listOfUnlearnedWords = dictionary.filter { it.correctAnswersCount < MAX_VALUE_LEARNED_WORD }
-        if (listOfUnlearnedWords.isEmpty()) {
+        val unlearnedWords = dictionary.filter { it.correctAnswersCount < MAX_VALUE_LEARNED_WORD }
+        if (unlearnedWords.isEmpty()) {
             println("Все слова выучены в базе!")
             break
         }
 
-        val randomObjectWordToLearn: Word = listOfUnlearnedWords.random()
-        val originalWordToLearn: String = randomObjectWordToLearn.original.capitalize()
-        val translateOriginalWordToLearn: String = randomObjectWordToLearn.translate.capitalize()
+        val wordToLearn: Word = unlearnedWords.random()
+        val originalWord: String = wordToLearn.original.capitalize()
+        val translateWord: String = wordToLearn.translate.capitalize()
+        val allAnswerWordsOptions: List<String> = getAnswerOptions(dictionary, unlearnedWords, wordToLearn)
 
-        val allAnswerWordsOptions = getAnswerOptions(
-            dictionary, listOfUnlearnedWords, randomObjectWordToLearn, translateOriginalWordToLearn,
-        )
-
-        do {
-            println(originalWordToLearn)
+        while (true) {
+            println(originalWord)
             showAnswersWorldOptions(allAnswerWordsOptions)
             println("0. Выход")
 
-            val inputNumber = readln().toIntOrNull() ?: INCORRECT_VALUE
-            if (inputNumber == 0) break@metka
-
-            if (inputNumber in (1..allAnswerWordsOptions.size)) {
-                if (allAnswerWordsOptions[inputNumber - 1] == translateOriginalWordToLearn) {
-                    randomObjectWordToLearn.correctAnswersCount++
-                    println("Правильно!")
-                    break
-                } else {
-                    println("Неправильно - слово [$translateOriginalWordToLearn]\n")
-                    continue@metka
+            when (val input = readlnOrNull()?.toIntOrNull() ?: INCORRECT_VALUE) {
+                0 -> break@metka
+                in 1..allAnswerWordsOptions.size -> {
+                    if (allAnswerWordsOptions[input - 1] == translateWord) {
+                        wordToLearn.correctAnswersCount++
+                        println("Правильно!")
+                        break
+                    } else {
+                        println("Неправильно - слово [$translateWord]\n")
+                        continue@metka
+                    }
                 }
-            } else {
-                println("Вы ввели некорректное значение, повторите попытку!")
-            }
-        } while (true)
 
+                else -> println("Вы ввели некорректное значение, повторите попытку!")
+            }
+        }
     } while (true)
 }
 
