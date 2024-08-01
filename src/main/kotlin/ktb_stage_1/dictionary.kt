@@ -4,7 +4,6 @@ import java.io.File
 
 private const val ONE_HUNDRED_PERCENT = 100
 private const val MAX_VALUE_LEARNED_WORD = 3
-private const val THREE_WORDS_FOR_ANSWER_OPTIONS = 3
 private const val FOUR_WORDS_FOR_ANSWER_OPTIONS = 4
 
 data class Word(
@@ -80,7 +79,7 @@ private fun showScreenMenu(dictionary: List<Word>) {
 }
 
 private fun learningWords(dictionary: List<Word>) {
-    do {
+    stop@ do {
         val listOfUnlearnedWords = dictionary.filter { it.correctAnswersCount < MAX_VALUE_LEARNED_WORD }
 
         if (listOfUnlearnedWords.isEmpty()) {
@@ -89,56 +88,61 @@ private fun learningWords(dictionary: List<Word>) {
         }
         val randomObjectWordToLearn: Word = listOfUnlearnedWords.random()
 
-        val originalWordToLearn: String = randomObjectWordToLearn.original
+        val originalWordToLearn: String = randomObjectWordToLearn.original.capitalize()
         val translateOriginalWordToLearn: String = randomObjectWordToLearn.translate
 
-        val wordAnswerOptions = getAllAnswerOptions(
-            dictionary, listOfUnlearnedWords, randomObjectWordToLearn, translateOriginalWordToLearn
-        )
+        val allAnswerWordsOptions: MutableSet<String> = listOfUnlearnedWords
+            .filter { it != randomObjectWordToLearn }
+            .shuffled()
+            .take(FOUR_WORDS_FOR_ANSWER_OPTIONS - 1)
+            .map { it.translate }
+            .toMutableSet()
+        allAnswerWordsOptions.add(translateOriginalWordToLearn)
 
-        println(originalWordToLearn.capitalize())
-        val outputAnswers: String = wordAnswerOptions.mapIndexed { index, word ->
-            "${index + 1} - ${word.capitalize()}"
-        }.joinToString(", ")
-        println(outputAnswers)
-        println("0. Выход")
+        if (allAnswerWordsOptions.size < FOUR_WORDS_FOR_ANSWER_OPTIONS) {
+            val additionalAnswerOptions = dictionary
+                .filter { it.correctAnswersCount == MAX_VALUE_LEARNED_WORD }
+                .map { it.translate }
+                .filterNot { allAnswerWordsOptions.contains(it) }
+                .shuffled()
+                .take(FOUR_WORDS_FOR_ANSWER_OPTIONS - allAnswerWordsOptions.size)
 
-        val inputNumber: Int = readln().toIntOrNull() ?: 0
-        if (inputNumber == 0) break
+            allAnswerWordsOptions.addAll(additionalAnswerOptions)
+        }
+        val shuffledListAllAnswerWordsOptions = allAnswerWordsOptions
+            .toMutableList()
+            .apply { shuffle() }
+            .map { it.capitalize() }
+
+
+
+        do {
+            println(originalWordToLearn)
+            val outputAnswers: String = shuffledListAllAnswerWordsOptions.mapIndexed { index, word ->
+                "${index + 1} - $word"
+            }.joinToString(", ")
+            println(outputAnswers)
+            println("0. Выход")
+
+            val inputNumber = readln().toIntOrNull() ?: 5
+            if (inputNumber == 0) break@stop
+
+            if (inputNumber in (1..shuffledListAllAnswerWordsOptions.size)) {
+                val selectedWord = shuffledListAllAnswerWordsOptions.toList()
+                val answer = selectedWord[inputNumber - 1]
+                if (answer == translateOriginalWordToLearn.capitalize()) {
+                    randomObjectWordToLearn.correctAnswersCount++
+                    println("Правильно!")
+                    break
+                } else {
+                    println("Неправильно - слово [$translateOriginalWordToLearn]\n")
+                }
+            } else {
+                println("Вы ввели некорректное значение, повторите попытку!")
+            }
+        } while (true)
 
     } while (true)
-}
-
-private fun getAllAnswerOptions(
-    dictionary: List<Word>,
-    listOfUnlearnedWords: List<Word>,
-    randomObjectWordToLearn: Word,
-    translateOriginalWordToLearn: String,
-): List<String> {
-    val unlearnedOptionsWords: List<Word> = listOfUnlearnedWords.filter { it != randomObjectWordToLearn }
-    val initialOptionsWords: List<Word> = if (unlearnedOptionsWords.size < THREE_WORDS_FOR_ANSWER_OPTIONS) {
-        unlearnedOptionsWords + dictionary
-            .filter { it.correctAnswersCount >= MAX_VALUE_LEARNED_WORD && it != randomObjectWordToLearn }
-            .shuffled()
-            .take(THREE_WORDS_FOR_ANSWER_OPTIONS - unlearnedOptionsWords.size)
-    } else {
-        unlearnedOptionsWords.shuffled().take(THREE_WORDS_FOR_ANSWER_OPTIONS)
-    }
-
-    val wordAnswerOptions = mutableSetOf<String>()
-    wordAnswerOptions.add(translateOriginalWordToLearn)
-    wordAnswerOptions.addAll(initialOptionsWords.shuffled().map { it.translate })
-
-    while (wordAnswerOptions.size < FOUR_WORDS_FOR_ANSWER_OPTIONS) {
-        val additionalWords = dictionary
-            .filter { it.correctAnswersCount >= MAX_VALUE_LEARNED_WORD && it.translate != translateOriginalWordToLearn }
-            .shuffled()
-        for (word in additionalWords) {
-            wordAnswerOptions.add(word.translate)
-            if (wordAnswerOptions.size == FOUR_WORDS_FOR_ANSWER_OPTIONS) break
-        }
-    }
-    return wordAnswerOptions.shuffled().toList()
 }
 
 private fun showStatisticInfo(dictionary: List<Word>) {
