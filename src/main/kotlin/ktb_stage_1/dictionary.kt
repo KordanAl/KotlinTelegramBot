@@ -5,6 +5,7 @@ import java.io.File
 private const val ONE_HUNDRED_PERCENT = 100
 private const val MAX_VALUE_LEARNED_WORD = 3
 private const val FOUR_WORDS_FOR_ANSWER_OPTIONS = 4
+private const val INCORRECT_VALUE = 5
 
 data class Word(
     val original: String,
@@ -124,7 +125,7 @@ private fun learningWords(dictionary: List<Word>) {
             println(outputAnswers)
             println("0. Выход")
 
-            val inputNumber = readln().toIntOrNull() ?: 5
+            val inputNumber = readln().toIntOrNull() ?: INCORRECT_VALUE
             if (inputNumber == 0) break@stop
 
             if (inputNumber in (1..shuffledListAllAnswerWordsOptions.size)) {
