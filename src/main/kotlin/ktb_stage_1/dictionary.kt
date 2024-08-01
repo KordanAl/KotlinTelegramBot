@@ -53,20 +53,51 @@ private fun String.capitalize(): String {
     return replaceFirstChar { it.uppercase() }
 }
 
+private fun getAnswerOptions(
+    dictionary: List<Word>,
+    listOfUnlearnedWords: List<Word>,
+    randomObjectWordToLearn: Word,
+    translateOriginalWordToLearn: String,
+): List<String> {
+    val allAnswerWordsOptions = mutableSetOf<String>().apply {
+        add(translateOriginalWordToLearn)
+        addAll(
+            listOfUnlearnedWords
+                .filter { it != randomObjectWordToLearn }
+                .shuffled()
+                .take(FOUR_WORDS_FOR_ANSWER_OPTIONS - 1)
+                .map { it.translate.capitalize() }
+                .toMutableSet()
+        )
+    }
+
+    if (allAnswerWordsOptions.size < FOUR_WORDS_FOR_ANSWER_OPTIONS) {
+        val additionalAnswerOptions = dictionary
+            .filter { it.correctAnswersCount == MAX_VALUE_LEARNED_WORD }
+            .map { it.translate.capitalize() }
+            .filterNot { allAnswerWordsOptions.contains(it) }
+            .shuffled()
+            .take(FOUR_WORDS_FOR_ANSWER_OPTIONS - allAnswerWordsOptions.size)
+
+        allAnswerWordsOptions.addAll(additionalAnswerOptions)
+    }
+    return allAnswerWordsOptions.toList().shuffled()
+}
+
+private fun showAnswersWorldOptions(allAnswerWordsOptions: List<String>) =
+    println(
+        allAnswerWordsOptions.mapIndexed { index, word ->
+            "${index + 1} - $word"
+        }.joinToString(", ")
+    )
+
+
 private fun showScreenMenu(dictionary: List<Word>) {
     while (true) {
-        println(
-            """
-        Меню:
-        1 - Учить слова
-        2 - Статистика
-        0 - Выход
-        Введите необходимое значение:
-    """.trimIndent()
-        )
+        showStartMenuText()
 
         when (readln().toIntOrNull()) {
-            1 -> learningWords(dictionary)
+            1 -> showLearningWords(dictionary)
             2 -> showStatisticInfo(dictionary)
             0 -> {
                 println("Вы вышли из тренажера!")
@@ -79,65 +110,50 @@ private fun showScreenMenu(dictionary: List<Word>) {
     }
 }
 
-private fun learningWords(dictionary: List<Word>) {
-    stop@ do {
-        val listOfUnlearnedWords = dictionary.filter { it.correctAnswersCount < MAX_VALUE_LEARNED_WORD }
+private fun showStartMenuText() {
+    println(
+        """
+        <-|Меню:
+        <-|1 - Учить слова
+        <-|2 - Статистика
+        <-|0 - Выход
+        <-|Введите необходимое значение:
+    """.trimMargin("<-|")
+    )
+}
 
+private fun showLearningWords(dictionary: List<Word>) {
+    metka@ do {
+        val listOfUnlearnedWords = dictionary.filter { it.correctAnswersCount < MAX_VALUE_LEARNED_WORD }
         if (listOfUnlearnedWords.isEmpty()) {
             println("Все слова выучены в базе!")
             break
         }
-        val randomObjectWordToLearn: Word = listOfUnlearnedWords.random()
 
+        val randomObjectWordToLearn: Word = listOfUnlearnedWords.random()
         val originalWordToLearn: String = randomObjectWordToLearn.original.capitalize()
         val translateOriginalWordToLearn: String = randomObjectWordToLearn.translate.capitalize()
 
-        val allAnswerWordsOptions: MutableSet<String> = listOfUnlearnedWords
-            .filter { it != randomObjectWordToLearn }
-            .shuffled()
-            .take(FOUR_WORDS_FOR_ANSWER_OPTIONS - 1)
-            .map { it.translate }
-            .toMutableSet()
-        allAnswerWordsOptions.add(translateOriginalWordToLearn)
-
-        if (allAnswerWordsOptions.size < FOUR_WORDS_FOR_ANSWER_OPTIONS) {
-            val additionalAnswerOptions = dictionary
-                .filter { it.correctAnswersCount == MAX_VALUE_LEARNED_WORD }
-                .map { it.translate }
-                .filterNot { allAnswerWordsOptions.contains(it) }
-                .shuffled()
-                .take(FOUR_WORDS_FOR_ANSWER_OPTIONS - allAnswerWordsOptions.size)
-
-            allAnswerWordsOptions.addAll(additionalAnswerOptions)
-        }
-        val shuffledListAllAnswerWordsOptions = allAnswerWordsOptions
-            .toMutableList()
-            .apply { shuffle() }
-            .map { it.capitalize() }
-
-
+        val allAnswerWordsOptions = getAnswerOptions(
+            dictionary, listOfUnlearnedWords, randomObjectWordToLearn, translateOriginalWordToLearn,
+        )
 
         do {
             println(originalWordToLearn)
-            val outputAnswers: String = shuffledListAllAnswerWordsOptions.mapIndexed { index, word ->
-                "${index + 1} - $word"
-            }.joinToString(", ")
-            println(outputAnswers)
+            showAnswersWorldOptions(allAnswerWordsOptions)
             println("0. Выход")
 
             val inputNumber = readln().toIntOrNull() ?: INCORRECT_VALUE
-            if (inputNumber == 0) break@stop
+            if (inputNumber == 0) break@metka
 
-            if (inputNumber in (1..shuffledListAllAnswerWordsOptions.size)) {
-                val selectedWord = shuffledListAllAnswerWordsOptions.toList()
-                val answer = selectedWord[inputNumber - 1]
-                if (answer == translateOriginalWordToLearn) {
+            if (inputNumber in (1..allAnswerWordsOptions.size)) {
+                if (allAnswerWordsOptions[inputNumber - 1] == translateOriginalWordToLearn) {
                     randomObjectWordToLearn.correctAnswersCount++
                     println("Правильно!")
                     break
                 } else {
                     println("Неправильно - слово [$translateOriginalWordToLearn]\n")
-                    continue@stop
+                    continue@metka
                 }
             } else {
                 println("Вы ввели некорректное значение, повторите попытку!")
