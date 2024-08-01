@@ -90,7 +90,7 @@ private fun learningWords(dictionary: List<Word>) {
         val randomObjectWordToLearn: Word = listOfUnlearnedWords.random()
 
         val originalWordToLearn: String = randomObjectWordToLearn.original.capitalize()
-        val translateOriginalWordToLearn: String = randomObjectWordToLearn.translate
+        val translateOriginalWordToLearn: String = randomObjectWordToLearn.translate.capitalize()
 
         val allAnswerWordsOptions: MutableSet<String> = listOfUnlearnedWords
             .filter { it != randomObjectWordToLearn }
@@ -131,12 +131,13 @@ private fun learningWords(dictionary: List<Word>) {
             if (inputNumber in (1..shuffledListAllAnswerWordsOptions.size)) {
                 val selectedWord = shuffledListAllAnswerWordsOptions.toList()
                 val answer = selectedWord[inputNumber - 1]
-                if (answer == translateOriginalWordToLearn.capitalize()) {
+                if (answer == translateOriginalWordToLearn) {
                     randomObjectWordToLearn.correctAnswersCount++
                     println("Правильно!")
                     break
                 } else {
                     println("Неправильно - слово [$translateOriginalWordToLearn]\n")
+                    continue@stop
                 }
             } else {
                 println("Вы ввели некорректное значение, повторите попытку!")
