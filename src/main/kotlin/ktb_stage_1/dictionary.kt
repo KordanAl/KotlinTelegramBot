@@ -50,7 +50,7 @@ private fun runFileParsing(wordFile: File, dictionary: MutableList<Word>) {
     }
 }
 
-private fun String.capitalize(): String {
+private fun String.capitalizeFirstChar(): String {
     return replaceFirstChar { it.uppercase() }
 }
 
@@ -59,19 +59,19 @@ private fun getAnswerOptions(
     unlearnedWords: List<Word>,
     wordToLearn: Word,
 ): List<String> {
-    val allOptions = mutableSetOf(wordToLearn.translate.capitalize())
+    val allOptions = mutableSetOf(wordToLearn.translate.capitalizeFirstChar())
     allOptions.addAll(
         unlearnedWords
             .filter { it != wordToLearn }
             .shuffled()
             .take(FOUR_WORDS_FOR_ANSWER_OPTIONS - 1)
-            .map { it.translate.capitalize() }
+            .map { it.translate.capitalizeFirstChar() }
     )
 
     if (allOptions.size < FOUR_WORDS_FOR_ANSWER_OPTIONS) {
         val additionalOptions = dictionary
             .filter { it.correctAnswersCount == MAX_VALUE_LEARNED_WORD }
-            .map { it.translate.capitalize() }
+            .map { it.translate.capitalizeFirstChar() }
             .filterNot { allOptions.contains(it) }
             .shuffled()
             .take(FOUR_WORDS_FOR_ANSWER_OPTIONS - allOptions.size)
@@ -127,8 +127,8 @@ private fun showLearningWords(dictionary: List<Word>) {
         }
 
         val wordToLearn: Word = unlearnedWords.random()
-        val originalWord: String = wordToLearn.original.capitalize()
-        val translateWord: String = wordToLearn.translate.capitalize()
+        val originalWord: String = wordToLearn.original.capitalizeFirstChar()
+        val translateWord: String = wordToLearn.translate.capitalizeFirstChar()
         val allAnswerWordsOptions: List<String> = getAnswerOptions(dictionary, unlearnedWords, wordToLearn)
 
         while (true) {
