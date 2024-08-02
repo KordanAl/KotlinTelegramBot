@@ -39,10 +39,10 @@ private fun creatingFileAndFillingItWithBasicWords(file: File) {
 private fun runFileParsing(wordFile: File, dictionary: MutableList<Word>) {
     try {
         val lines = wordFile.readLines()
-        lines.map { it.split("|") }.forEach {
-            val original = it[0]
-            val translate = it[1]
-            val correctAnswersCount = it.getOrNull(2)?.toIntOrNull() ?: 0
+        lines.map { it.split("|") }.forEach { word ->
+            val original = word[0].replaceFirstChar { it.uppercase() }
+            val translate = word[1].replaceFirstChar { it.uppercase() }
+            val correctAnswersCount = word.getOrNull(2)?.toIntOrNull() ?: 0
             dictionary.add(Word(original, translate, correctAnswersCount))
         }
     } catch (e: Exception) {
@@ -50,28 +50,24 @@ private fun runFileParsing(wordFile: File, dictionary: MutableList<Word>) {
     }
 }
 
-private fun String.capitalizeFirstChar(): String {
-    return replaceFirstChar { it.uppercase() }
-}
-
 private fun getAnswerOptions(
     dictionary: List<Word>,
     unlearnedWords: List<Word>,
     wordToLearn: Word,
 ): List<String> {
-    val allOptions = mutableSetOf(wordToLearn.translate.capitalizeFirstChar())
+    val allOptions = mutableSetOf(wordToLearn.translate)
     allOptions.addAll(
         unlearnedWords
             .filter { it != wordToLearn }
             .shuffled()
             .take(FOUR_WORDS_FOR_ANSWER_OPTIONS - 1)
-            .map { it.translate.capitalizeFirstChar() }
+            .map { it.translate}
     )
 
     if (allOptions.size < FOUR_WORDS_FOR_ANSWER_OPTIONS) {
         val additionalOptions = dictionary
             .filter { it.correctAnswersCount == MAX_VALUE_LEARNED_WORD }
-            .map { it.translate.capitalizeFirstChar() }
+            .map { it.translate }
             .filterNot { allOptions.contains(it) }
             .shuffled()
             .take(FOUR_WORDS_FOR_ANSWER_OPTIONS - allOptions.size)
@@ -86,7 +82,6 @@ private fun showAnswersWorldOptions(allAnswerWordsOptions: List<String>) =
             "${index + 1} - $word"
         }.joinToString(", ")
     )
-
 
 private fun showScreenMenu(dictionary: List<Word>) {
     while (true) {
@@ -127,8 +122,8 @@ private fun showLearningWords(dictionary: List<Word>) {
         }
 
         val wordToLearn: Word = unlearnedWords.random()
-        val originalWord: String = wordToLearn.original.capitalizeFirstChar()
-        val translateWord: String = wordToLearn.translate.capitalizeFirstChar()
+        val originalWord: String = wordToLearn.original
+        val translateWord: String = wordToLearn.translate
         val allAnswerWordsOptions: List<String> = getAnswerOptions(dictionary, unlearnedWords, wordToLearn)
 
         while (true) {
