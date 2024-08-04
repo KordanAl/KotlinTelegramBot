@@ -155,11 +155,10 @@ private fun showStatisticInfo(dictionary: List<Word>) {
 
 private fun saveDictionary(file: File, dictionary: List<Word>) {
     try {
-        file.writeText(
-            dictionary.joinToString("\n") {
-            "${it.original}|${it.translate}|${it.correctAnswersCount}"
-            }
-        )
+        file.writeText("")
+        dictionary.forEach { word ->
+            file.appendText("${word.original}|${word.translate}|${word.correctAnswersCount}\n")
+        }
     } catch (e: Exception) {
         println("Ошибка записи файла: ${e::class.simpleName}")
     }
