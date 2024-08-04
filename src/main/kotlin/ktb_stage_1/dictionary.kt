@@ -81,12 +81,12 @@ private fun showAnswersWorldOptions(allAnswerWordsOptions: List<Word>) =
         }.joinToString(", ")
     )
 
-private fun showScreenMenu(dictionary: List<Word>) {
+private fun showScreenMenu(wordFile: File, dictionary: List<Word>) {
     while (true) {
         showStartMenuText()
 
         when (readln().toIntOrNull()) {
-            1 -> showLearningWords(dictionary)
+            1 -> showLearningWords(wordFile, dictionary)
             2 -> showStatisticInfo(dictionary)
             0 -> {
                 println("Вы вышли из тренажера!")
@@ -111,7 +111,7 @@ private fun showStartMenuText() {
     )
 }
 
-private fun showLearningWords(dictionary: List<Word>) {
+private fun showLearningWords(wordFile: File, dictionary: List<Word>) {
     do {
         val unlearnedWords = dictionary.filter { it.correctAnswersCount < MAX_VALUE_LEARNED_WORD }
         if (unlearnedWords.isEmpty()) {
@@ -132,6 +132,7 @@ private fun showLearningWords(dictionary: List<Word>) {
                 if (allAnswerWordsOptions.map { it.translate }[input - 1] == wordToLearn.translate) {
                     wordToLearn.correctAnswersCount++
                     println("Правильно!\n")
+                    saveDictionary(wordFile, dictionary)
                     continue
                 } else {
                     println("Неправильно - слово [${wordToLearn.translate}]\n")
@@ -152,6 +153,18 @@ private fun showStatisticInfo(dictionary: List<Word>) {
     println("Вы выучили $wordsLearned из $allWords слов | $percentOfWordsLearned%")
 }
 
+private fun saveDictionary(file: File, dictionary: List<Word>) {
+    try {
+        file.writeText(
+            dictionary.joinToString("\n") {
+            "${it.original}|${it.translate}|${it.correctAnswersCount}"
+            }
+        )
+    } catch (e: Exception) {
+        println("Ошибка записи файла: ${e::class.simpleName}")
+    }
+}
+
 fun main() {
     val wordFile = File("words.txt")
     creatingFileAndFillingItWithBasicWords(wordFile)
@@ -159,5 +172,5 @@ fun main() {
     val dictionary: MutableList<Word> = mutableListOf()
     runFileParsing(wordFile, dictionary)
 
-    showScreenMenu(dictionary)
+    showScreenMenu(wordFile, dictionary)
 }
