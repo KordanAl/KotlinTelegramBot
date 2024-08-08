@@ -1,12 +1,11 @@
 package org.example
 
 import java.io.File
+import java.lang.IllegalStateException
 
 private const val ONE_HUNDRED_PERCENT = 100
-private const val MAX_VALUE_LEARNED_WORD = 3
-private const val FOUR_WORDS = 4
 
-data class Statistics (
+data class Statistics(
     val learned: Int,
     val total: Int,
     val percent: Int,
@@ -17,32 +16,32 @@ data class Question(
     val correctAnswer: Word,
 )
 
-class LearnWordsTrainer {
+class LearnWordsTrainer(
+    private val maxValueLearnedCount: Int = 3,
+    private val countOfQuestionsWords: Int = 4,
+) {
     private var question: Question? = null
     private val dictionary = loadDictionary()
 
     fun getStatistics(): Statistics {
-        val learned = dictionary.filter { it.correctAnswersCount >= MAX_VALUE_LEARNED_WORD }.size
+        val learned = dictionary.filter { it.correctAnswersCount >= maxValueLearnedCount }.size
         val total = dictionary.size
         val percent = learned * ONE_HUNDRED_PERCENT / total
-        return Statistics(learned, total, percent,)
+        return Statistics(learned, total, percent)
     }
 
     fun getNextQuestion(): Question? {
-        val notLearnedList: List<Word> = dictionary.filter { it.correctAnswersCount < MAX_VALUE_LEARNED_WORD }
+        val notLearnedList: List<Word> = dictionary.filter { it.correctAnswersCount < maxValueLearnedCount }
         if (notLearnedList.isEmpty()) return null
-        val questionWords: MutableList<Word> = notLearnedList.take(FOUR_WORDS).shuffled().toMutableList()
-        val correctAnswer = questionWords.random()
-
-        // Проверка на случай если невыученных слов будет меньше 4, то мы берем варианты из уже выученных слов
-        if (questionWords.count() < FOUR_WORDS) {
-            val additionalAnswers = dictionary
-                .filterNot { it.correctAnswersCount < MAX_VALUE_LEARNED_WORD }
-                .take(FOUR_WORDS - questionWords.count())
+        val questionWords = if (notLearnedList.size < countOfQuestionsWords) {
+            val learnedList = dictionary.filter { it.correctAnswersCount >= maxValueLearnedCount }.shuffled()
+            notLearnedList
                 .shuffled()
-            questionWords.addAll(additionalAnswers)
-        }
-
+                .take(countOfQuestionsWords) + learnedList.take(countOfQuestionsWords - notLearnedList.size)
+        } else {
+            notLearnedList.shuffled().take(countOfQuestionsWords)
+        }.shuffled()
+        val correctAnswer = notLearnedList.random()
         question = Question(
             variants = questionWords,
             correctAnswer = correctAnswer,
@@ -65,10 +64,9 @@ class LearnWordsTrainer {
     }
 
     private fun loadDictionary(): List<Word> {
-        val dictionary = mutableListOf<Word>()
-        val wordFile = File("words.txt")
-        if (!wordFile.exists()) {
-            wordFile.createNewFile()
+        try {
+            val dictionary = mutableListOf<Word>()
+            val wordFile = File("words.txt")
             val baseWords = listOf(
                 "hello|привет|0",
                 "dog|собака|0",
@@ -84,20 +82,27 @@ class LearnWordsTrainer {
                 "friend|друг|0",
                 "cat|кошка|0"
             )
-            wordFile.writeText(baseWords.joinToString("\n"))
-        }
+            if (!wordFile.exists()) {
+                wordFile.createNewFile()
+                wordFile.writeText(baseWords.joinToString("\n"))
+            } else{
+                if (wordFile.length() == 0L) wordFile.writeText(baseWords.joinToString("\n"))
+            }
 
-        wordFile.readLines().forEach { word ->
-            val splitLine = word.split("|")
-            dictionary.add(
-                Word(
-                    splitLine[0].replaceFirstChar { it.uppercase() },
-                    splitLine[1].replaceFirstChar { it.uppercase() },
-                    splitLine[2].toIntOrNull() ?: 0
+            wordFile.readLines().forEach { word ->
+                val splitLine = word.split("|")
+                dictionary.add(
+                    Word(
+                        splitLine[0].replaceFirstChar { it.uppercase() },
+                        splitLine[1].replaceFirstChar { it.uppercase() },
+                        splitLine[2].toIntOrNull() ?: 0
+                    )
                 )
-            )
+            }
+            return dictionary
+        } catch (e: IndexOutOfBoundsException) {
+            throw IllegalStateException("Некорректный файл")
         }
-        return dictionary
     }
 
     private fun saveDictionary(words: List<Word>) {
