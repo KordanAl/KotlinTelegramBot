@@ -11,21 +11,21 @@ private const val REQUEST_DELAY = 2000L
 fun main(args: Array<String>) {
 
     val botToken = args[0]
-    var updateId = 0
+    var resultUpdateId = 0
 
     while (true) {
         Thread.sleep(REQUEST_DELAY)
-        val updates: String = getUpdates(botToken, updateId)
+        val updates: String = getUpdates(botToken, resultUpdateId)
         println(updates)
 
         val updateIdRegex = "\"update_id\":(\\d+?),\n\"message\"".toRegex()
         val matchResultUpdateId: MatchResult? = updateIdRegex.find(updates)
         val groupsUpdateId = matchResultUpdateId?.groups
-        val id: String? = groupsUpdateId?.get(1)?.value
-        if (updateId == -1) continue
-        if (id != null) {
-            updateId = id.toInt() + 1
-            println(id)
+        val updateId: String? = groupsUpdateId?.get(1)?.value
+        if (resultUpdateId == -1) continue
+        if (updateId != null) {
+            resultUpdateId = updateId.toInt() + 1
+            println(updateId)
         }
 
         val messageTextRegex: Regex = "\"text\":\"(.+?)\"".toRegex()
