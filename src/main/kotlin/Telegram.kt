@@ -1,47 +1,32 @@
 package org.example
 
-import java.net.URI
-import java.net.http.HttpClient
-import java.net.http.HttpRequest
-import java.net.http.HttpResponse
-
-private const val BASE_URL = "https://api.telegram.org"
 private const val REQUEST_DELAY = 2000L
+
+private fun showDataInConsole(nameData: String, data: String?) {
+    if (data != null) println("->[${nameData.replaceFirstChar { it.uppercase() }}: $data]<-")
+}
 
 fun main(args: Array<String>) {
 
-    val botToken = args[0]
-    var resultUpdateId = 0
+    val telegram = TelegramBotService(botToken = args[0])
 
     while (true) {
         Thread.sleep(REQUEST_DELAY)
-        val updates: String = getUpdates(botToken, resultUpdateId)
+        val updates: String = telegram.getUpdates()
         println(updates)
 
-        val updateIdRegex = "\"update_id\":(\\d+?),\n\"message\"".toRegex()
-        val matchResultUpdateId: MatchResult? = updateIdRegex.find(updates)
-        val groupsUpdateId = matchResultUpdateId?.groups
-        val updateId: String? = groupsUpdateId?.get(1)?.value
-        if (resultUpdateId == -1) continue
-        if (updateId != null) {
-            resultUpdateId = updateId.toInt() + 1
-            println(updateId)
-        }
+        if (telegram.resultUpdateId == -1) continue
 
-        val messageTextRegex: Regex = "\"text\":\"(.+?)\"".toRegex()
-        val matchResult: MatchResult? = messageTextRegex.find(updates)
-        val groups = matchResult?.groups
-        val text: String? = groups?.get(1)?.value
-        if (text != null) println(text)
+        val updateId: String? = telegram.getUpdateId(updates)
+        if (updateId != null) telegram.resultUpdateId = updateId.toInt() + 1
+        showDataInConsole("updateId", updateId)
+
+        val chatId: String? = telegram.getChatId(updates)
+        showDataInConsole("chatId", chatId)
+
+        val text: String? = telegram.getText(updates)
+        showDataInConsole("text", text)
+
+        if (chatId != null && text != null) telegram.sendMessage(chatId, text)
     }
-
-}
-
-fun getUpdates(botToken: String, updateId: Int): String {
-    val urlGetUpdates = "$BASE_URL/bot$botToken/getUpdates?offset=$updateId"
-    val client: HttpClient = HttpClient.newBuilder().build()
-    val request: HttpRequest = HttpRequest.newBuilder().uri(URI.create(urlGetUpdates)).build()
-    val response: HttpResponse<String> = client.send(request, HttpResponse.BodyHandlers.ofString())
-
-    return response.body()
 }
