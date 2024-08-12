@@ -4,14 +4,14 @@ private const val UPDATE_DELAY = 2000L
 
 fun main(args: Array<String>) {
 
-    val telegram = TelegramBotService(botToken = args[0])
+    val englishWordsLearningBot = TelegramBotService(botToken = args[0])
 
     while (true) {
         Thread.sleep(UPDATE_DELAY)
-        val data: UpdateData? = telegram.getUpdatesData()
-        if (data != null) {
-            println(data)
-            telegram.sendMessage(data.chatId, data.text)
+        val updatedData: UpdateData? = englishWordsLearningBot.getUpdates()
+        if (updatedData != null) {
+            println(updatedData)
+            englishWordsLearningBot.sendMessage(updatedData.chatId, updatedData.text)
         }
     }
 }
