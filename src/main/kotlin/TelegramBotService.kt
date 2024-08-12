@@ -8,6 +8,7 @@ import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 
 private const val ANSI_GREEN = "\u001B[32m"
+private const val ANSI_YELLOW = "\u001B[33m"
 private const val ANSI_RESET = "\u001B[0m"
 
 data class UpdateData(
@@ -51,7 +52,7 @@ data class TelegramBotService(
     fun getUpdates(): UpdateData? {
         val urlGetUpdates = "$baseUrl/bot$botToken/getUpdates?offset=$resultUpdateId"
         val update = getResponse(urlGetUpdates).body()
-        println(update)
+        println("Response from getUpdates: $update")
 
         val updateId = getDataFromUpdate(updateIdRegex, update)
         val chatId = getDataFromUpdate(chatIdRegex, update)
@@ -73,7 +74,10 @@ data class TelegramBotService(
         if (text == "Hello") {
             val encodedText = URLEncoder.encode(text, StandardCharsets.UTF_8.toString())
             val urlSendMessage = "$baseUrl/bot$botToken/sendMessage?chat_id=$chatId&text=${encodedText}"
-            println("Response from sendMessage: ${getResponse(urlSendMessage).body()}")
+            println(
+                "Response from sendMessage: ${getResponse(urlSendMessage).body()}\n" +
+                    "${ANSI_YELLOW}SendMessage = [$text]${ANSI_RESET}\n"
+            )
         }
     }
 
