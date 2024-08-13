@@ -5,6 +5,12 @@ import java.lang.IllegalStateException
 
 private const val ONE_HUNDRED_PERCENT = 100
 
+data class Word(
+    val questionWord: String,
+    val translate: String,
+    var correctAnswersCount: Int = 0,
+)
+
 data class Statistics(
     val learned: Int,
     val total: Int,

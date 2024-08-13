@@ -1,11 +1,5 @@
 package org.example
 
-data class Word(
-    val questionWord: String,
-    val translate: String,
-    var correctAnswersCount: Int = 0,
-)
-
 fun Question.asConsoleString(): String {
     val variants = this.variants
         .mapIndexed { index, word -> "${index + 1} - ${word.translate}" }
@@ -14,7 +8,7 @@ fun Question.asConsoleString(): String {
 }
 
 fun main() {
-    val trainer = try {
+    val consoleTrainer = try {
         LearnWordsTrainer(3, 4)
     } catch (e: Exception) {
         println("Невозможно загрузить словарь")
@@ -33,7 +27,7 @@ fun main() {
         when (readln().toIntOrNull()) {
             1 -> {
                 while (true) {
-                    val question = trainer.getNextQuestion()
+                    val question = consoleTrainer.getNextQuestion()
                     if (question == null) {
                         println("Все слова выучены")
                         break
@@ -43,7 +37,7 @@ fun main() {
                         val userAnswerInput = readln().toIntOrNull()
                         if (userAnswerInput == 0) break
 
-                        if (trainer.checkAnswer(userAnswerInput?.minus(1))) {
+                        if (consoleTrainer.checkAnswer(userAnswerInput?.minus(1))) {
                             println("Правильно!\n")
                         } else {
                             println(
@@ -56,7 +50,7 @@ fun main() {
             }
 
             2 -> {
-                val statistics = trainer.getStatistics()
+                val statistics = consoleTrainer.getStatistics()
                 println("Выучено ${statistics.learned} из ${statistics.total} слов | ${statistics.percent}%")
             }
 
