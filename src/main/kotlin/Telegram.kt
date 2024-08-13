@@ -4,33 +4,35 @@ private const val UPDATE_DELAY = 2000L
 
 fun main(args: Array<String>) {
 
-    val bot = TelegramBotService(botToken = args[0])
+    val telegramBot = try {
+        TelegramBotService(botToken = args[0])
+    } catch (e: Exception) {
+        println("Бот токен не найден!")
+        return
+    }
 
     val botTrainer = try {
         LearnWordsTrainer(3, 4)
     } catch (e: Exception) {
-        println("Невозможно загрузить словарь")
+        println("Невозможно загрузить словарь!")
         return
     }
 
     while (true) {
         Thread.sleep(UPDATE_DELAY)
-        val data: UpdateData? = bot.getUpdates()
-        if (data != null) {
+        val botUpdate = telegramBot.getUpdates()
+        if (botUpdate != null) {
+            println(botUpdate)
 
-            println(data)
+            if (botUpdate.text.lowercase() == "/start") telegramBot.sendMenu(botUpdate.chatId)
+            // Сделал when заранее, так будет 2 кнопка
+            when (botUpdate.data.lowercase()) {
 
-            when (data.text.lowercase()) {
+                STATISTICS_BUTTON -> telegramBot.sendMessage(
+                    botUpdate.chatId,
+                    "Выучено 10 из 10 слов | 100%"
+                )
 
-                "/start" -> bot.sendMenu(data.chatId)
-
-                "hello" -> bot.sendMessage(data.chatId, "Hello")
-
-            }
-
-            when (data.data.lowercase()) {
-
-                "statistics_clicked" -> bot.sendMessage(data.chatId, "Выучено 10 из 10 слов | 100%")
             }
         }
     }

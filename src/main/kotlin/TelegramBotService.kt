@@ -10,6 +10,11 @@ import java.nio.charset.StandardCharsets
 private const val ANSI_GREEN = "\u001B[32m"
 private const val ANSI_RESET = "\u001B[0m"
 
+private const val BASE_URL = "https://api.telegram.org"
+
+const val LEARN_WORDS_BUTTON = "learn_words_clicked"
+const val STATISTICS_BUTTON = "statistics_clicked"
+
 data class UpdateData(
     val updateId: String,
     val chatId: String,
@@ -32,37 +37,33 @@ data class UpdateData(
 data class TelegramBotService(
     private val botToken: String,
     private var lastUpdateId: Int = 0,
-    private val baseUrl: String = "https://api.telegram.org",
 ) {
-    private var updateData: UpdateData? = null
 
     fun getUpdates(): UpdateData? {
-        val urlGetUpdates = "$baseUrl/bot$botToken/getUpdates?offset=$lastUpdateId"
+        val urlGetUpdates = "$BASE_URL/bot$botToken/getUpdates?offset=$lastUpdateId"
         val update: String = getResponse(urlGetUpdates).body()
         println("Response from getUpdates: $update")
 
-        if (getDataFromUpdate("\"update_id\":(\\d+)", update) == null) {
-            return null
+        return if (getDataFromUpdate("\"update_id\":(\\d+)", update) == null) {
+            null
         } else {
-            updateData = UpdateData(
+            UpdateData(
                 updateId = getDataFromUpdate("\"update_id\":(\\d+)", update).toString(),
                 chatId = getDataFromUpdate("\"chat\":\\{\"id\":(\\d+)", update).toString(),
                 text = getDataFromUpdate("\"text\":\"(.*?)\"", update).toString(),
                 data = getDataFromUpdate("\"data\":\"(.*?)\"", update).toString()
             )
-            lastUpdateId = updateData!!.updateId.toInt() + 1
         }
-        return updateData
     }
 
     fun sendMessage(chatId: String, text: String): String {
         val encod = URLEncoder.encode(text, StandardCharsets.UTF_8.toString())
-        val urlSendMessage = "$baseUrl/bot$botToken/sendMessage?chat_id=$chatId&text=${encod}"
+        val urlSendMessage = "$BASE_URL/bot$botToken/sendMessage?chat_id=$chatId&text=${encod}"
         return getResponse(urlSendMessage).body()
     }
 
     fun sendMenu(chatId: String): String {
-        val urlSendMessage = "$baseUrl/bot$botToken/sendMessage"
+        val urlSendMessage = "$BASE_URL/bot$botToken/sendMessage"
         val sendMenuBody = """
             {
                 "chat_id": $chatId,
@@ -72,11 +73,11 @@ data class TelegramBotService(
                         [
                             {
                                 "text": "Изучить слова",
-                                "callback_data": "learn_words_clicked"
+                                "callback_data": "$LEARN_WORDS_BUTTON"
                             },
                             {
                                 "text": "Статистика",
-                                "callback_data": "statistics_clicked"
+                                "callback_data": "$STATISTICS_BUTTON"
                             }
                         ]
                     ]
@@ -106,5 +107,4 @@ data class TelegramBotService(
             .build()
         return client.send(request, HttpResponse.BodyHandlers.ofString())
     }
-
 }
