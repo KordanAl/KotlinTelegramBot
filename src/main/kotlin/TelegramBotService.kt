@@ -44,11 +44,14 @@ data class TelegramBotService(
         val update: String = getResponse(urlGetUpdates).body()
         println("Response from getUpdates: $update")
 
-        return if (getDataFromUpdate("\"update_id\":(\\d+)", update) == null) {
+        val newUpdateId = getDataFromUpdate("\"update_id\":(\\d+)", update)?.toIntOrNull()
+
+        return if (newUpdateId == null) {
             null
         } else {
+            lastUpdateId = newUpdateId + 1
             UpdateData(
-                updateId = getDataFromUpdate("\"update_id\":(\\d+)", update).toString(),
+                updateId = newUpdateId.toString(),
                 chatId = getDataFromUpdate("\"chat\":\\{\"id\":(\\d+)", update).toString(),
                 text = getDataFromUpdate("\"text\":\"(.*?)\"", update).toString(),
                 data = getDataFromUpdate("\"data\":\"(.*?)\"", update).toString()
