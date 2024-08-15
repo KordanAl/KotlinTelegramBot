@@ -7,6 +7,10 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.nio.charset.StandardCharsets
 
+const val UPDATE_DELAY = 2000L
+
+const val BICEPS = "\uD83D\uDCAA"
+const val DOOR = "\uD83D\uDEAA"
 private const val ANSI_GREEN = "\u001B[32m"
 private const val ANSI_RESET = "\u001B[0m"
 
@@ -72,19 +76,29 @@ data class TelegramBotService(
     // Функция вывода основного меню пользователю в чате с ботом.
     fun sendMenu(chatId: String): String {
         val urlSendMessage = "$BASE_URL/bot$botToken/sendMessage"
+        val sendWelcomeMessage = """
+    {
+        "chat_id": $chatId,
+        "text": "🔄 Загрузка вашего учебного пространства...",
+        "parse_mode": "Markdown"
+    }
+""".trimIndent()
+        getResponse(urlSendMessage, sendWelcomeMessage)
+        Thread.sleep(UPDATE_DELAY)
+
         val sendMenuBody = """
             {
                 "chat_id": $chatId,
-                "text": "Основное меню",
+                "text": "🎯 Основное меню - English Words Learning Bot.",
                 "reply_markup": {
                     "inline_keyboard": [
                         [
                             {
-                                "text": "Изучить слова",
+                                "text": "📚 Изучать слова",
                                 "callback_data": "$LEARN_WORDS_BUTTON"
                             },
                             {
-                                "text": "Статистика",
+                                "text": "📈 Статистика",
                                 "callback_data": "$STATISTICS_BUTTON"
                             }
                         ]
@@ -92,6 +106,7 @@ data class TelegramBotService(
                 }
             }
         """.trimIndent()
+
         return getResponse(urlSendMessage, sendMenuBody).body()
     }
 
@@ -133,7 +148,8 @@ data class TelegramBotService(
         val sendQuestionBody = """
             {
                 "chat_id": $chatId,
-                "text": "${question.correctAnswer.questionWord}",
+                "text": "Переведи слово: 👉 <b>${question.correctAnswer.questionWord}</b> 👈",
+                "parse_mode": "HTML",
                 "reply_markup": {
                     "inline_keyboard": [
                         [
@@ -146,7 +162,7 @@ data class TelegramBotService(
                         ],                       
                         [
                             {
-                                "text": "Выход в меню",
+                                "text": "$DOOR Выход в меню",
                                 "callback_data": "$BACK_TO_MENU_BUTTON"
                             }     
                         ]

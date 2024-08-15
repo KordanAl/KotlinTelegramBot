@@ -1,7 +1,5 @@
 package org.example
 
-private const val UPDATE_DELAY = 2000L
-
 fun main(args: Array<String>) {
 
     val bot = try {
@@ -37,8 +35,9 @@ fun main(args: Array<String>) {
                     val statistics = botTrainer.getStatistics()
                     bot.sendMessage(
                         botUpdate.chatId,
-                        "Выучено ${statistics.learned} из ${statistics.total} слов | ${statistics.percent}%"
+                        "$BICEPS Выучено ${statistics.learned} из ${statistics.total} слов | ${statistics.percent}%"
                     )
+                    bot.sendMenu(botUpdate.chatId)
                 }
 
                 else -> when{
