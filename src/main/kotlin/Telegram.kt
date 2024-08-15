@@ -18,6 +18,8 @@ fun main(args: Array<String>) {
         return
     }
 
+    var currentQuestion: Question? = null
+
     while (true) {
         Thread.sleep(UPDATE_DELAY)
         val botUpdate = telegramBot.getUpdates()
@@ -27,14 +29,28 @@ fun main(args: Array<String>) {
 
             if (botUpdate.text.lowercase() == "/start") telegramBot.sendMenu(botUpdate.chatId)
 
-            val statistics = botTrainer.getStatistics()
-            when (botUpdate.data.lowercase()) { // Сделал when заранее, так будет 2 кнопка
+            when (botUpdate.data.lowercase()) {
 
-                STATISTICS_BUTTON -> telegramBot.sendMessage(
-                    botUpdate.chatId,
-                    "Выучено ${statistics.learned} из ${statistics.total} слов | ${statistics.percent}%"
-                )
+                LEARN_WORDS_BUTTON -> {
+                    telegramBot.startProcessingNewQuestion(botTrainer,telegramBot,botUpdate)
+                        .also { currentQuestion = it }
+                }
 
+                STATISTICS_BUTTON -> {
+                    val statistics = botTrainer.getStatistics()
+                    telegramBot.sendMessage(
+                        botUpdate.chatId,
+                        "Выучено ${statistics.learned} из ${statistics.total} слов | ${statistics.percent}%"
+                    )
+                }
+
+                else -> if (CALLBACK_DATA_ANSWER_PREFIX in botUpdate.data.lowercase()) {
+                    currentQuestion?.let { it ->
+                        telegramBot.checkNextQuestionAndSend(botTrainer, botUpdate, it)
+                        telegramBot.startProcessingNewQuestion(botTrainer, telegramBot, botUpdate)
+                            .also { currentQuestion = it }
+                    }
+                }
             }
         }
     }

@@ -15,6 +15,8 @@ private const val BASE_URL = "https://api.telegram.org"
 const val LEARN_WORDS_BUTTON = "learn_words_clicked"
 const val STATISTICS_BUTTON = "statistics_clicked"
 
+const val CALLBACK_DATA_ANSWER_PREFIX = "answer_"
+
 data class UpdateData(
     val updateId: String,
     val chatId: String,
@@ -88,6 +90,59 @@ data class TelegramBotService(
             }
         """.trimIndent()
         return getResponse(urlSendMessage, sendMenuBody).body()
+    }
+
+    fun startProcessingNewQuestion(
+        botTrainer: LearnWordsTrainer,
+        telegramBot: TelegramBotService,
+        botUpdate: UpdateData
+    ): Question? {
+        val question = botTrainer.getNextQuestion()
+        return if (question == null) {
+            telegramBot.sendMessage(botUpdate.chatId, "Все слова выучены")
+            null
+        } else {
+            telegramBot.sendQuestion(botUpdate.chatId, question)
+            question
+        }
+    }
+
+    fun checkNextQuestionAndSend(trainer: LearnWordsTrainer, botUpdate: UpdateData, question: Question) {
+        val userClickedButton = if (botUpdate.data.startsWith(CALLBACK_DATA_ANSWER_PREFIX)) {
+            botUpdate.data.substring(CALLBACK_DATA_ANSWER_PREFIX.length).toIntOrNull()
+        } else null
+
+        if (trainer.checkAnswer(userClickedButton)) {
+            sendMessage(botUpdate.chatId, "Правильно!")
+        } else {
+            sendMessage(botUpdate.chatId, "Неправильно! " +
+                    "${question.correctAnswer.questionWord} - это ${question.correctAnswer.translate}"
+            )
+        }
+    }
+
+    private fun sendQuestion(chatId: String, question: Question): String? {
+        val urlSendMessage = "$BASE_URL/bot$botToken/sendMessage"
+        val sendQuestionBody = """
+            {
+                "chat_id": $chatId,
+                "text": "${question.correctAnswer.questionWord}",
+                "reply_markup": {
+                    "inline_keyboard": [
+                        [
+                            ${question.variants.mapIndexed { index, variant ->
+                    """{
+                        "text": "${variant.translate}",
+                        "callback_data": "$CALLBACK_DATA_ANSWER_PREFIX$index"
+                    }"""
+            }.joinToString(separator = ",")}       
+                        ]
+                    ]
+                }
+            }
+        """.trimIndent()
+
+        return getResponse(urlSendMessage, sendQuestionBody).body()
     }
 
     // Функция предназначена для поиска данных по regex тексту.
