@@ -4,7 +4,7 @@ private const val UPDATE_DELAY = 2000L
 
 fun main(args: Array<String>) {
 
-    val telegramBot = try {
+    val bot = try {
         TelegramBotService(botToken = args[0])
     } catch (e: Exception) {
         println("Бот токен не найден!")
@@ -22,36 +22,32 @@ fun main(args: Array<String>) {
 
     while (true) {
         Thread.sleep(UPDATE_DELAY)
-        val botUpdate = telegramBot.getUpdates()
+        val botUpdate = bot.getUpdates()
 
         if (botUpdate != null) {
             println(botUpdate)
 
-            if (botUpdate.text.lowercase() == "/start") telegramBot.sendMenu(botUpdate.chatId)
+            if (botUpdate.text.lowercase() == "/start") bot.sendMenu(botUpdate.chatId)
 
             when (botUpdate.data.lowercase()) {
 
-                LEARN_WORDS_BUTTON -> {
-                    telegramBot.startProcessingNewQuestion(botTrainer,telegramBot,botUpdate)
-                        .also { currentQuestion = it }
-                }
+                LEARN_WORDS_BUTTON -> bot.getLastQuestions(bot, botTrainer, botUpdate).also { currentQuestion = it }
 
                 STATISTICS_BUTTON -> {
                     val statistics = botTrainer.getStatistics()
-                    telegramBot.sendMessage(
+                    bot.sendMessage(
                         botUpdate.chatId,
                         "Выучено ${statistics.learned} из ${statistics.total} слов | ${statistics.percent}%"
                     )
                 }
 
-                else -> if (CALLBACK_DATA_ANSWER_PREFIX in botUpdate.data.lowercase()) {
-                    currentQuestion?.let { it ->
-                        telegramBot.checkNextQuestionAndSend(botTrainer, botUpdate, it)
-                        telegramBot.startProcessingNewQuestion(botTrainer, telegramBot, botUpdate)
-                            .also { currentQuestion = it }
+                else -> when{
+                    botUpdate.data.lowercase().startsWith(CALLBACK_DATA_ANSWER_PREFIX) -> currentQuestion?.let { it ->
+                        bot.checkNextQuestionAndSend(botTrainer, botUpdate, it)
+                        bot.getLastQuestions(bot, botTrainer, botUpdate).also { currentQuestion = it }
                     }
-                } else {
-                    if (botUpdate.data.lowercase() == BACK_TO_MENU_BUTTON) telegramBot.sendMenu(botUpdate.chatId)
+
+                    botUpdate.data.lowercase() == BACK_TO_MENU_BUTTON -> bot.sendMenu(botUpdate.chatId)
                 }
             }
         }

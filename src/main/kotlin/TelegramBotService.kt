@@ -96,17 +96,17 @@ data class TelegramBotService(
     }
 
     // Функция получения нового Слова для изучения, если есть не выученные слова.
-    fun startProcessingNewQuestion(
+    fun getLastQuestions(
+        bot: TelegramBotService,
         botTrainer: LearnWordsTrainer,
-        telegramBot: TelegramBotService,
         botUpdate: UpdateData,
     ): Question? {
         val question = botTrainer.getNextQuestion()
         return if (question == null) {
-            telegramBot.sendMessage(botUpdate.chatId, "Все слова выучены")
+            bot.sendMessage(botUpdate.chatId, "Все слова выучены")
             null
         } else {
-            telegramBot.sendQuestion(botUpdate.chatId, question)
+            bot.sendQuestion(botUpdate.chatId, question)
             question
         }
     }
