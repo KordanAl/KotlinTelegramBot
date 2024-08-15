@@ -21,16 +21,18 @@ fun main(args: Array<String>) {
     while (true) {
         Thread.sleep(UPDATE_DELAY)
         val botUpdate = telegramBot.getUpdates()
+
         if (botUpdate != null) {
             println(botUpdate)
 
             if (botUpdate.text.lowercase() == "/start") telegramBot.sendMenu(botUpdate.chatId)
-            // Сделал when заранее, так будет 2 кнопка
-            when (botUpdate.data.lowercase()) {
+
+            val statistics = botTrainer.getStatistics()
+            when (botUpdate.data.lowercase()) { // Сделал when заранее, так будет 2 кнопка
 
                 STATISTICS_BUTTON -> telegramBot.sendMessage(
                     botUpdate.chatId,
-                    "Выучено 10 из 10 слов | 100%"
+                    "Выучено ${statistics.learned} из ${statistics.total} слов | ${statistics.percent}%"
                 )
 
             }
