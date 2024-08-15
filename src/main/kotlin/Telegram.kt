@@ -50,6 +50,8 @@ fun main(args: Array<String>) {
                         telegramBot.startProcessingNewQuestion(botTrainer, telegramBot, botUpdate)
                             .also { currentQuestion = it }
                     }
+                } else {
+                    if (botUpdate.data.lowercase() == BACK_TO_MENU_BUTTON) telegramBot.sendMenu(botUpdate.chatId)
                 }
             }
         }

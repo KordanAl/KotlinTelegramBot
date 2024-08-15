@@ -14,6 +14,7 @@ private const val BASE_URL = "https://api.telegram.org"
 
 const val LEARN_WORDS_BUTTON = "learn_words_clicked"
 const val STATISTICS_BUTTON = "statistics_clicked"
+const val BACK_TO_MENU_BUTTON = "back_to_menu_clicked"
 
 const val CALLBACK_DATA_ANSWER_PREFIX = "answer_"
 
@@ -40,7 +41,7 @@ data class TelegramBotService(
     private val botToken: String,
     private var lastUpdateId: Int = 0,
 ) {
-
+    // Функция получения обновления и данных если они пришли с ответом.
     fun getUpdates(): UpdateData? {
         val urlGetUpdates = "$BASE_URL/bot$botToken/getUpdates?offset=$lastUpdateId"
         val update: String = getResponse(urlGetUpdates).body()
@@ -61,12 +62,14 @@ data class TelegramBotService(
         }
     }
 
+    // Функция отправки сообщения пользователю в чате с ботом.
     fun sendMessage(chatId: String, text: String): String {
         val encod = URLEncoder.encode(text, StandardCharsets.UTF_8.toString())
         val urlSendMessage = "$BASE_URL/bot$botToken/sendMessage?chat_id=$chatId&text=${encod}"
         return getResponse(urlSendMessage).body()
     }
 
+    // Функция вывода основного меню пользователю в чате с ботом.
     fun sendMenu(chatId: String): String {
         val urlSendMessage = "$BASE_URL/bot$botToken/sendMessage"
         val sendMenuBody = """
@@ -92,10 +95,11 @@ data class TelegramBotService(
         return getResponse(urlSendMessage, sendMenuBody).body()
     }
 
+    // Функция получения нового Слова для изучения, если есть не выученные слова.
     fun startProcessingNewQuestion(
         botTrainer: LearnWordsTrainer,
         telegramBot: TelegramBotService,
-        botUpdate: UpdateData
+        botUpdate: UpdateData,
     ): Question? {
         val question = botTrainer.getNextQuestion()
         return if (question == null) {
@@ -107,6 +111,7 @@ data class TelegramBotService(
         }
     }
 
+    // Проверка на правильный ответ и отправка соответствующего сообщения пользователю в чате с ботом.
     fun checkNextQuestionAndSend(trainer: LearnWordsTrainer, botUpdate: UpdateData, question: Question) {
         val userClickedButton = if (botUpdate.data.startsWith(CALLBACK_DATA_ANSWER_PREFIX)) {
             botUpdate.data.substring(CALLBACK_DATA_ANSWER_PREFIX.length).toIntOrNull()
@@ -115,12 +120,14 @@ data class TelegramBotService(
         if (trainer.checkAnswer(userClickedButton)) {
             sendMessage(botUpdate.chatId, "Правильно!")
         } else {
-            sendMessage(botUpdate.chatId, "Неправильно! " +
-                    "${question.correctAnswer.questionWord} - это ${question.correctAnswer.translate}"
+            sendMessage(
+                botUpdate.chatId, "Неправильно! " +
+                        "${question.correctAnswer.questionWord} - это ${question.correctAnswer.translate}"
             )
         }
     }
 
+    // Функция отправки Слова для изучения и его вариантов ответов
     private fun sendQuestion(chatId: String, question: Question): String? {
         val urlSendMessage = "$BASE_URL/bot$botToken/sendMessage"
         val sendQuestionBody = """
@@ -130,12 +137,18 @@ data class TelegramBotService(
                 "reply_markup": {
                     "inline_keyboard": [
                         [
-                            ${question.variants.mapIndexed { index, variant ->
-                    """{
-                        "text": "${variant.translate}",
-                        "callback_data": "$CALLBACK_DATA_ANSWER_PREFIX$index"
-                    }"""
-            }.joinToString(separator = ",")}       
+                            ${question.variants.mapIndexed { index, variant -> 
+                            """{
+                                "text": "${variant.translate}",
+                                "callback_data": "$CALLBACK_DATA_ANSWER_PREFIX$index"
+                            }""" }.joinToString(separator = ",")
+                            }                                  
+                        ],                       
+                        [
+                            {
+                                "text": "Выход в меню",
+                                "callback_data": "$BACK_TO_MENU_BUTTON"
+                            }     
                         ]
                     ]
                 }
@@ -151,12 +164,14 @@ data class TelegramBotService(
         return matchResult?.groups?.get(1)?.value
     }
 
+    //Функция получения ответа от сервера
     private fun getResponse(urlGetUpdates: String): HttpResponse<String> {
         val client: HttpClient = HttpClient.newBuilder().build()
         val request: HttpRequest = HttpRequest.newBuilder().uri(URI.create(urlGetUpdates)).build()
         return client.send(request, HttpResponse.BodyHandlers.ofString())
     }
 
+    //перегруженная Функция получения ответа от сервера используя пост запрос
     private fun getResponse(urlGetUpdates: String, str: String): HttpResponse<String> {
         val client: HttpClient = HttpClient.newBuilder().build()
         val request: HttpRequest = HttpRequest.newBuilder().uri(URI.create(urlGetUpdates))
