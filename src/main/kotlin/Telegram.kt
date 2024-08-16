@@ -25,9 +25,9 @@ fun main(args: Array<String>) {
         if (botUpdate != null) {
             println(botUpdate)
 
-            if (botUpdate.text.lowercase() == "/start") bot.sendMenu(botUpdate.chatId)
+            if (botUpdate.message.lowercase() == "/start") bot.sendMenu(botUpdate.chatId)
 
-            when (botUpdate.data.lowercase()) {
+            when (botUpdate.callbackData.lowercase()) {
 
                 LEARN_WORDS_BUTTON -> bot.getLastQuestions(bot, botTrainer, botUpdate).also { currentQuestion = it }
 
@@ -41,12 +41,15 @@ fun main(args: Array<String>) {
                 }
 
                 else -> when{
-                    botUpdate.data.lowercase().startsWith(CALLBACK_DATA_ANSWER_PREFIX) -> currentQuestion?.let { it ->
-                        bot.checkNextQuestionAndSend(botTrainer, botUpdate, it)
-                        bot.getLastQuestions(bot, botTrainer, botUpdate).also { currentQuestion = it }
+                    botUpdate.callbackData.lowercase().startsWith(CALLBACK_DATA_ANSWER_PREFIX) -> {
+
+                        currentQuestion?.let { it ->
+                            bot.checkNextQuestionAndSend(botTrainer, botUpdate, it)
+                            bot.getLastQuestions(bot, botTrainer, botUpdate).also { currentQuestion = it }
+                        }
                     }
 
-                    botUpdate.data.lowercase() == BACK_TO_MENU_BUTTON -> bot.sendMenu(botUpdate.chatId)
+                    botUpdate.callbackData.lowercase() == BACK_TO_MENU_BUTTON -> bot.sendMenu(botUpdate.chatId)
                 }
             }
         }

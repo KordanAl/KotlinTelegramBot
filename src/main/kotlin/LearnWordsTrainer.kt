@@ -101,7 +101,7 @@ class LearnWordsTrainer(
                     Word(
                         splitLine[0].replaceFirstChar { it.uppercase() },
                         splitLine[1].replaceFirstChar { it.uppercase() },
-                        splitLine[2].toIntOrNull() ?: 0
+                        0
                     )
                 )
             }
