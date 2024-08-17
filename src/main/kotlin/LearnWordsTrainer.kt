@@ -28,21 +28,24 @@ class LearnWordsTrainer(
     private val countOfQuestionsWords: Int = 4,
 ) {
     private var question: Question? = null
-    private val dictionary: MutableSet<Word> by lazy { loadDictionary().toMutableSet() }
 
-    private val notLearnedWords: MutableSet<Word> by
-    lazy { dictionary.filter { it.correctAnswersCount < maxValueLearnedCount }.toMutableSet() }
-
-    private val learnedWords: MutableSet<Word> by
-    lazy { dictionary.filter { it.correctAnswersCount >= maxValueLearnedCount }.toMutableSet() }
-
+    private val dictionary: MutableSet<Word> by lazy {
+        loadDictionary().toMutableSet()
+    }
+    private val notLearnedWords: MutableSet<Word> by lazy {
+        dictionary.filter { it.correctAnswersCount < maxValueLearnedCount }.toMutableSet()
+    }
+    private val learnedWords: MutableSet<Word> by lazy {
+        dictionary.filter { it.correctAnswersCount >= maxValueLearnedCount }.toMutableSet()
+    }
+    // Функция получения статистики
     fun getStatistics(): Statistics {
         val learned = learnedWords.size
         val total = dictionary.size
         val percent = learned * ONE_HUNDRED_PERCENT / total
         return Statistics(learned, total, percent)
     }
-
+    // Функция получения слово для изучения и 4-х вариантов ответов
     fun getNextQuestion(): Question? {
         if (notLearnedWords.isEmpty()) return null
 
@@ -54,7 +57,10 @@ class LearnWordsTrainer(
             shuffledNotLearned.take(countOfQuestionsWords)
         }
         val correctAnswer = questionWords.random()
-        question = Question(variants = questionWords.shuffled(), correctAnswer = correctAnswer)
+        question = Question(
+            variants = questionWords.shuffled(),
+            correctAnswer = correctAnswer
+        )
         return question
     }
 
@@ -64,6 +70,7 @@ class LearnWordsTrainer(
             question?.correctAnswer?.correctAnswersCount?.let { count ->
                 if (count >= maxValueLearnedCount) {
                     notLearnedWords.remove(question?.correctAnswer)
+
                     learnedWords.add(question?.correctAnswer!!)
                 }
                 saveDictionary(question?.correctAnswer!!)
