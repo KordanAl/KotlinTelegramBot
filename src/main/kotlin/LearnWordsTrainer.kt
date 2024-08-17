@@ -63,21 +63,20 @@ class LearnWordsTrainer(
         )
         return question
     }
-
+    //Функция проверки ответа по индексу и перезапись списков со словами, если ответ верный.
     fun checkAnswer(userAnswerIndex: Int?): Boolean {
         val correctAnswerIndex = question?.variants?.indexOf(question?.correctAnswer)
         return correctAnswerIndex != null && correctAnswerIndex == userAnswerIndex?.also {
             question?.correctAnswer?.correctAnswersCount?.let { count ->
                 if (count >= maxValueLearnedCount) {
                     notLearnedWords.remove(question?.correctAnswer)
-
                     learnedWords.add(question?.correctAnswer!!)
                 }
                 saveDictionary(question?.correctAnswer!!)
             }
         }
     }
-
+    //Функция загрузки словаря из файла и парсинг в объекты Word
     private fun loadDictionary(): Set<Word> {
         val dictionary = mutableSetOf<Word>()
         try {
@@ -104,7 +103,7 @@ class LearnWordsTrainer(
         }
         return dictionary
     }
-
+    //Функция сохранения результатов ответов через временный файл.
     private fun saveDictionary(word: Word) {
         val tempFile = File("temp_words.txt")
         val originalFile = File("words.txt")

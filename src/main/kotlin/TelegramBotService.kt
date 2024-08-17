@@ -118,11 +118,9 @@ data class TelegramBotService(
     private val botToken: String,
     private var lastUpdateId: Long = 0L,
 ) {
-
     private val json = Json {
         ignoreUnknownKeys = true
     }
-
     // Функция получения обновления и данных если они пришли с ответом.
     fun getUpdates(): UpdateData? {
         val urlGetUpdates = "$BASE_URL/bot$botToken/getUpdates?offset=$lastUpdateId"
@@ -148,19 +146,17 @@ data class TelegramBotService(
             callbackData = callbackData,
         )
     }
-
     // Функция отправки сообщения пользователю в чате с ботом.
     fun sendMessage(chatId: Long, text: String): String {
         val encod = URLEncoder.encode(text, StandardCharsets.UTF_8.toString())
         val urlSendMessage = "$BASE_URL/bot$botToken/sendMessage?chat_id=$chatId&text=${encod}"
         return getResponse(urlSendMessage).body()
     }
-
     // Функция вывода основного меню пользователю в чате с ботом.
     fun sendMenu(chatId: Long): String {
         val urlSendMessage = "$BASE_URL/bot$botToken/sendMessage"
 
-        sendMessage(chatId, "$RELOAD Загрузка вашего учебного пространства...")
+        sendMessage(chatId, "$RELOAD Загрузка словаря...")
 
         val requestBody = SendMessageRequest(
             chatId = chatId,
@@ -177,7 +173,6 @@ data class TelegramBotService(
         val requestBodyString = json.encodeToString(requestBody)
         return getResponse(urlSendMessage, requestBodyString).body()
     }
-
     // Функция получения нового Слова для изучения, если есть не выученные слова.
     fun getLastQuestions(
         bot: TelegramBotService,
@@ -193,7 +188,6 @@ data class TelegramBotService(
             question
         }
     }
-
     // Проверка на правильный ответ и отправка соответствующего сообщения пользователю в чате с ботом.
     fun checkNextQuestionAndSend(trainer: LearnWordsTrainer, botUpdate: UpdateData, question: Question) {
         val userClickedButton = if (botUpdate.callbackData.startsWith(CALLBACK_DATA_ANSWER_PREFIX)) {
@@ -209,7 +203,6 @@ data class TelegramBotService(
             )
         }
     }
-
     // Функция отправки Слова для изучения и его вариантов ответов
     private fun sendQuestion(chatId: Long, question: Question): String? {
         val urlSendMessage = "$BASE_URL/bot$botToken/sendMessage"
@@ -234,14 +227,12 @@ data class TelegramBotService(
         val requestBodyString = json.encodeToString(requestBody)
         return getResponse(urlSendMessage, requestBodyString).body()
     }
-
     //Функция получения ответа от сервера
     private fun getResponse(urlGetUpdates: String): HttpResponse<String> {
         val client: HttpClient = HttpClient.newBuilder().build()
         val request: HttpRequest = HttpRequest.newBuilder().uri(URI.create(urlGetUpdates)).build()
         return client.send(request, HttpResponse.BodyHandlers.ofString())
     }
-
     //перегруженная Функция получения ответа от сервера используя пост запрос
     private fun getResponse(urlGetUpdates: String, str: String): HttpResponse<String> {
         val client: HttpClient = HttpClient.newBuilder().build()
