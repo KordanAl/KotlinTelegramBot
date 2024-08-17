@@ -132,21 +132,21 @@ data class TelegramBotService(
         val response: Response = json.decodeFromString(responseString)
         val update = response.result
         val firstUpdate = update.firstOrNull()
-        val updateId = firstUpdate?.updateId
-        val chatId = firstUpdate?.message?.chat?.id ?: firstUpdate?.callbackQuery?.message?.chat?.id
+        val updateId = firstUpdate?.updateId ?: return null
+        val chatId = firstUpdate.message?.chat?.id
+            ?: firstUpdate.callbackQuery?.message?.chat?.id
+            ?: return null
+        val message = firstUpdate.message?.text ?: ""
+        val callbackData = firstUpdate.callbackQuery?.data ?: ""
 
-        return if (updateId == null) {
-            null
-        } else {
-            lastUpdateId = updateId + 1
+        lastUpdateId = updateId + 1
 
-            UpdateData(
-                updateId = updateId,
-                chatId = chatId!!,
-                message = firstUpdate.message?.text ?: "",
-                callbackData = firstUpdate.callbackQuery?.data ?: "",
-            )
-        }
+        return UpdateData(
+            updateId = updateId,
+            chatId = chatId,
+            message = message,
+            callbackData = callbackData,
+        )
     }
 
     // Функция отправки сообщения пользователю в чате с ботом.
@@ -159,14 +159,8 @@ data class TelegramBotService(
     // Функция вывода основного меню пользователю в чате с ботом.
     fun sendMenu(chatId: Long): String {
         val urlSendMessage = "$BASE_URL/bot$botToken/sendMessage"
-        val sendWelcomeMessage = """
-    {
-        "chat_id": $chatId,
-        "text": "$RELOAD Загрузка вашего учебного пространства..."
-    }
-""".trimIndent()
-        getResponse(urlSendMessage, sendWelcomeMessage)
-        Thread.sleep(UPDATE_DELAY / 2)
+
+        sendMessage(chatId, "$RELOAD Загрузка вашего учебного пространства...")
 
         val requestBody = SendMessageRequest(
             chatId = chatId,
