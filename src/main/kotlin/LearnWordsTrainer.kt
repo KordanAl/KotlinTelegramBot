@@ -73,35 +73,12 @@ class LearnWordsTrainer(
         try {
             val dictionary = mutableListOf<Word>()
             val wordFile = File("words.txt")
-            val baseWords = listOf(
-                "hello|привет|0",
-                "dog|собака|0",
-                "bird|птица|0",
-                "tree|дерево|0",
-                "book|книга|0",
-                "car|машина|0",
-                "house|дом|0",
-                "water|вода|0",
-                "sun|солнце|0",
-                "moon|луна|0",
-                "flower|цветок|0",
-                "friend|друг|0",
-                "cat|кошка|0"
-            )
-            if (!wordFile.exists()) {
-                wordFile.createNewFile()
-                wordFile.writeText(baseWords.joinToString("\n"))
-            } else{
-                if (wordFile.length() == 0L) wordFile.writeText(baseWords.joinToString("\n"))
-            }
-
             wordFile.readLines().forEach { word ->
                 val splitLine = word.split("|")
                 dictionary.add(
                     Word(
                         splitLine[0].replaceFirstChar { it.uppercase() },
                         splitLine[1].replaceFirstChar { it.uppercase() },
-                        0
                     )
                 )
             }
