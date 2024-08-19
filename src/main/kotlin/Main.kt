@@ -16,7 +16,6 @@ fun main() {
     }
 
     while (true) {
-
         println("""
             <-|Меню:
             <-|1- Учить слова
