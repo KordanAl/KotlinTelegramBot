@@ -48,10 +48,10 @@ class LearnWordsTrainer(
         } else {
             notLearnedList.shuffled().take(countOfQuestionsWords)
         }.shuffled()
-        val correctAnswer = questionWords.random()
+
         question = Question(
             variants = questionWords,
-            correctAnswer = correctAnswer,
+            correctAnswer = notLearnedList.random(),
         )
         return question
     }
@@ -72,7 +72,7 @@ class LearnWordsTrainer(
     private fun loadDictionary(): List<Word> {
         try {
             val dictionary = mutableListOf<Word>()
-            val wordFile = File("words.txt")
+            val wordFile = File(fileName)
             wordFile.readLines().forEach { word ->
                 val splitLine = word.split("|")
                 dictionary.add(
