@@ -73,6 +73,9 @@ class LearnWordsTrainer(
         try {
             val dictionary = mutableListOf<Word>()
             val wordFile = File(fileName)
+            if (!wordFile.exists()) {
+                File("words.txt").copyTo(wordFile)
+            }
             wordFile.readLines().forEach { word ->
                 val splitLine = word.split("|")
                 dictionary.add(
