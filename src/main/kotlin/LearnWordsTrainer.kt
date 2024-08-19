@@ -23,9 +23,11 @@ data class Question(
 )
 
 class LearnWordsTrainer(
-    private val maxValueLearnedCount: Int = 3,
+    private val fileName: String = "words.txt",
     private val countOfQuestionsWords: Int = 4,
 ) {
+    var maxValueLearnedCount: Int = 3
+        private set
     private var question: Question? = null
     private val dictionary = loadDictionary()
 
@@ -53,15 +55,16 @@ class LearnWordsTrainer(
             correctAnswer = correctAnswer,
         )
         return question
-
     }
 
     fun checkAnswer(userAnswerIndex: Int?): Boolean {
         return question?.let {
             val correctAnswerId = it.variants.indexOf(it.correctAnswer)
             if (correctAnswerId == userAnswerIndex) {
-                it.correctAnswer.correctAnswersCount++
-                saveDictionary(dictionary)
+                if (it.correctAnswer.correctAnswersCount < maxValueLearnedCount) {
+                    it.correctAnswer.correctAnswersCount++
+                    saveDictionary()
+                }
                 true
             } else {
                 false
@@ -89,16 +92,21 @@ class LearnWordsTrainer(
         }
     }
 
-    private fun saveDictionary(words: List<Word>) {
+    private fun saveDictionary() {
         try {
-            val wordsFile = File("words.txt")
+            val wordsFile = File(fileName)
             wordsFile.writeText("")
-            for (word in words) {
+            for (word in dictionary) {
                 wordsFile.appendText("${word.questionWord}|${word.translate}|${word.correctAnswersCount}\n")
             }
         } catch (e: Exception) {
             println("Ошибка записи файла: ${e::class.simpleName}")
         }
+    }
+
+    fun resetProgress() {
+        dictionary.forEach { it.correctAnswersCount = 0 }
+        saveDictionary()
     }
 
 }
