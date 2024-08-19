@@ -104,7 +104,6 @@ data class TelegramBotService(
     }
 
     private val trainers = HashMap<Long, LearnWordsTrainer>()
-
     private var currentQuestion: Question? = null
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -167,16 +166,11 @@ data class TelegramBotService(
 
     //функция проверки ответов
     private fun handleAnswer(bot: TelegramBotService, update: UpdateData) {
-        val trainer = getUpdateTrainer(update)
         currentQuestion?.let { question ->
             bot.checkNextQuestionAndSend(update, question)
-            if (question.correctAnswer.correctAnswersCount >= trainer.maxValueLearnedCount) {
-                currentQuestion = bot.getLastQuestions(bot, update)
-                if (currentQuestion == null) {
-                    bot.sendMenu(update.chatId)
-                }
-            } else {
-                currentQuestion = bot.getLastQuestions(bot, update)
+            currentQuestion = bot.getLastQuestions(bot, update)
+            if (currentQuestion == null) {
+                bot.sendMenu(update.chatId)
             }
         }
     }
@@ -217,7 +211,7 @@ data class TelegramBotService(
         val trainer = getUpdateTrainer(botUpdate)
         val question = trainer.getNextQuestion()
 
-        return if (question == null || question.correctAnswer.correctAnswersCount >= trainer.maxValueLearnedCount) {
+        return if (question == null) {
             bot.sendMessage(botUpdate.chatId, "Все слова выучены.")
             null
         } else {

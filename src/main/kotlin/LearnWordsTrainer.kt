@@ -25,9 +25,8 @@ data class Question(
 class LearnWordsTrainer(
     private val fileName: String = "words.txt",
     private val countOfQuestionsWords: Int = 4,
+    private val maxValueLearnedCount: Int = 3,
 ) {
-    var maxValueLearnedCount: Int = 3
-        private set
     private var question: Question? = null
     private val dictionary = loadDictionary()
 
@@ -61,10 +60,8 @@ class LearnWordsTrainer(
         return question?.let {
             val correctAnswerId = it.variants.indexOf(it.correctAnswer)
             if (correctAnswerId == userAnswerIndex) {
-                if (it.correctAnswer.correctAnswersCount < maxValueLearnedCount) {
-                    it.correctAnswer.correctAnswersCount++
-                    saveDictionary()
-                }
+                it.correctAnswer.correctAnswersCount++
+                saveDictionary()
                 true
             } else {
                 false
