@@ -107,6 +107,11 @@ data class TelegramBotService(
     private var currentQuestion: Question? = null
     private val json = Json { ignoreUnknownKeys = true }
 
+    // Функция получения актуального тренера для каждого пользователя
+    private fun getUpdateTrainer(update: UpdateData) = trainers.getOrPut(update.chatId) {
+        LearnWordsTrainer("${update.chatId}.txt")
+    }
+
     // Функция получения обновления и данных если они пришли с ответом.
     fun getUpdates(): UpdateData? {
         val urlGetUpdates = "$BASE_URL/bot$botToken/getUpdates?offset=$lastUpdateId"
@@ -119,9 +124,8 @@ data class TelegramBotService(
         val sortedUpdates = response.result.sortedBy { it.updateId }
         val firstUpdate = sortedUpdates.firstOrNull() ?: return null
 
-        val chatId = firstUpdate.message?.chat?.id
-            ?: firstUpdate.callbackQuery?.message?.chat?.id
-            ?: return null
+        val chatId = firstUpdate.message?.chat?.id ?: firstUpdate.callbackQuery?.message?.chat?.id
+        ?: return null
 
         lastUpdateId = sortedUpdates.last().updateId + 1
 
@@ -236,11 +240,6 @@ data class TelegramBotService(
                         "${question.correctAnswer.questionWord} - это ${question.correctAnswer.translate}"
             )
         }
-    }
-
-    // Функция получения актуального тренера для каждого пользователя
-    private fun getUpdateTrainer(update: UpdateData) = trainers.getOrPut(update.chatId) {
-        LearnWordsTrainer("${update.chatId}.txt")
     }
 
     // Функция отправки Слова для изучения и его вариантов ответов
