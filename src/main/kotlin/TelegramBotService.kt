@@ -93,10 +93,11 @@ data class TelegramBotService(
         private const val DOOR = "\uD83D\uDEAA"
         private const val STATISTIC = "\uD83D\uDCC8"
         private const val RELOAD = "\uD83D\uDD04"
-        private const val DARTS = "\uD83C\uDFAF"
         private const val CHECK_RIGHT = "\uD83D\uDC49"
         private const val CHECK_LEFT = "\uD83D\uDC48"
         private const val GREEN_CHECK = "✅"
+        private const val DOWNLOAD = "\uD83D\uDD24"
+        private const val STAR = "\uD83D\uDCAB"
 
         private const val LEARN_WORDS_BUTTON = "learn_words_clicked"
         private const val STATISTICS_BUTTON = "statistics_clicked"
@@ -234,9 +235,9 @@ data class TelegramBotService(
         val requestBody = SendMessageRequest(
             chatId = update.chatId,
             text = """
-                $RELOAD Загрузка словаря...
-                $GREEN_CHECK Словарь загружен!
-                $DARTS Добро пожаловать в основное меню!
+                $DOWNLOAD Загрузка словаря...   $GREEN_CHECK Словарь загружен!
+                
+                $STAR    Добро пожаловать в основное меню!    $STAR
             """.trimIndent(),
             replyMarkup = ReplyMarkup(
                 listOf(
@@ -245,7 +246,7 @@ data class TelegramBotService(
                         InlineKeyboard(text = "$STATISTIC Статистика", callbackData = STATISTICS_BUTTON),
                     ),
                     listOf(
-                        InlineKeyboard(text = "Сбросить прогресс", callbackData = RESET_BUTTON)
+                        InlineKeyboard(text = "$RELOAD Сбросить прогресс", callbackData = RESET_BUTTON)
                     )
                 )
             )
