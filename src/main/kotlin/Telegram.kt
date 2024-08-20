@@ -1,5 +1,3 @@
-package org.example
-
 private const val UPDATE_DELAY = 2000L
 
 fun main(args: Array<String>) {
