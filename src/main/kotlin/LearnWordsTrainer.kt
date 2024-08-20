@@ -2,6 +2,7 @@ import java.io.File
 import java.lang.IllegalStateException
 
 private const val ONE_HUNDRED_PERCENT = 100
+private const val CORRECT_ANSWER = 1
 
 data class Word(
     val questionWord: String,
@@ -38,19 +39,22 @@ class LearnWordsTrainer(
     fun getNextQuestion(): Question? {
         val notLearnedList: List<Word> = dictionary.filter { it.correctAnswersCount < maxValueLearnedCount }
         if (notLearnedList.isEmpty()) return null
+
+        val correctAnswer = notLearnedList.random() // Выбираем правильный ответ из невыученных слов
+
         val questionWords = if (notLearnedList.size < countOfQuestionsWords) {
             val learnedList = dictionary.filter { it.correctAnswersCount >= maxValueLearnedCount }.shuffled()
-            notLearnedList
-                .shuffled()
-                .take(countOfQuestionsWords) + learnedList.take(countOfQuestionsWords - notLearnedList.size)
+            notLearnedList.shuffled().take(countOfQuestionsWords - CORRECT_ANSWER) +
+                    learnedList.take(countOfQuestionsWords - notLearnedList.size) + correctAnswer
         } else {
-            notLearnedList.shuffled().take(countOfQuestionsWords)
+            notLearnedList.shuffled().take(countOfQuestionsWords - CORRECT_ANSWER) + correctAnswer
         }.shuffled()
 
         question = Question(
             variants = questionWords,
-            correctAnswer = notLearnedList.random(),
+            correctAnswer = correctAnswer
         )
+
         return question
     }
 
