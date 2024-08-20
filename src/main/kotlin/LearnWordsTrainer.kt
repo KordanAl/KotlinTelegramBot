@@ -1,5 +1,3 @@
-package org.example
-
 import java.io.File
 import java.lang.IllegalStateException
 
