@@ -23,8 +23,9 @@ data class Question(
 )
 
 class LearnWordsTrainer(
-    private val maxValueLearnedCount: Int = 3,
+    private val fileName: String = "words.txt",
     private val countOfQuestionsWords: Int = 4,
+    private val maxValueLearnedCount: Int = 3,
 ) {
     private var question: Question? = null
     private val dictionary = loadDictionary()
@@ -47,13 +48,12 @@ class LearnWordsTrainer(
         } else {
             notLearnedList.shuffled().take(countOfQuestionsWords)
         }.shuffled()
-        val correctAnswer = questionWords.random()
+
         question = Question(
             variants = questionWords,
-            correctAnswer = correctAnswer,
+            correctAnswer = notLearnedList.random(),
         )
         return question
-
     }
 
     fun checkAnswer(userAnswerIndex: Int?): Boolean {
@@ -61,7 +61,7 @@ class LearnWordsTrainer(
             val correctAnswerId = it.variants.indexOf(it.correctAnswer)
             if (correctAnswerId == userAnswerIndex) {
                 it.correctAnswer.correctAnswersCount++
-                saveDictionary(dictionary)
+                saveDictionary()
                 true
             } else {
                 false
@@ -72,7 +72,10 @@ class LearnWordsTrainer(
     private fun loadDictionary(): List<Word> {
         try {
             val dictionary = mutableListOf<Word>()
-            val wordFile = File("words.txt")
+            val wordFile = File(fileName)
+            if (!wordFile.exists()) {
+                File("words.txt").copyTo(wordFile)
+            }
             wordFile.readLines().forEach { word ->
                 val splitLine = word.split("|")
                 dictionary.add(
@@ -89,16 +92,21 @@ class LearnWordsTrainer(
         }
     }
 
-    private fun saveDictionary(words: List<Word>) {
+    private fun saveDictionary() {
         try {
-            val wordsFile = File("words.txt")
+            val wordsFile = File(fileName)
             wordsFile.writeText("")
-            for (word in words) {
+            for (word in dictionary) {
                 wordsFile.appendText("${word.questionWord}|${word.translate}|${word.correctAnswersCount}\n")
             }
         } catch (e: Exception) {
             println("Ошибка записи файла: ${e::class.simpleName}")
         }
+    }
+
+    fun resetProgress() {
+        dictionary.forEach { it.correctAnswersCount = 0 }
+        saveDictionary()
     }
 
 }

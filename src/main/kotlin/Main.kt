@@ -9,19 +9,21 @@ fun Question.asConsoleString(): String {
 
 fun main() {
     val consoleTrainer = try {
-        LearnWordsTrainer(3, 4)
+        LearnWordsTrainer(countOfQuestionsWords = 4)
     } catch (e: Exception) {
         println("Невозможно загрузить словарь")
         return
     }
 
     while (true) {
-        println("""
+        println(
+            """
             <-|Меню:
             <-|1- Учить слова
             <-|2- Статистика
             <-|0 - Выход
-        """.trimMargin("<-|"))
+        """.trimMargin("<-|")
+        )
 
         when (readln().toIntOrNull()) {
             1 -> {
