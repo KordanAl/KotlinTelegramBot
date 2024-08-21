@@ -107,7 +107,6 @@ data class TelegramBotService(
     }
 
     private val trainers = HashMap<Long, LearnWordsTrainer>()
-    private var currentQuestion: Question? = null
     private val json = Json { ignoreUnknownKeys = true }
 
     // Функция получения актуального тренера для каждого пользователя
@@ -133,7 +132,7 @@ data class TelegramBotService(
         lastUpdateId = sortedUpdates.last().updateId + 1
 
         return UpdateData(
-            updateId = sortedUpdates.last().updateId,
+            updateId = firstUpdate.updateId,
             chatId = chatId,
             messageId = firstUpdate.callbackQuery?.message?.messageId ?: 0L,
             message = firstUpdate.message?.text ?: "",
@@ -142,69 +141,69 @@ data class TelegramBotService(
     }
 
     // Функция для обработки обновления и вывода соответствующей информации для каждого пользователя
-    fun handleUpdate(bot: TelegramBotService, update: UpdateData) {
+    fun handleUpdate(update: UpdateData) {
+        val trainer = getUpdateTrainer(update)
 
         if (update.message.lowercase() == "/start") {
-            bot.sendMessage(update, "Привет!")
-            bot.sendMenu(update)
+            sendMessage(update, "Привет!")
+            sendMenu(update)
         }
         when (update.callbackData.lowercase()) {
 
             LEARN_WORDS_BUTTON -> {
                 deleteMessage(update, listOf(update.messageId - 1, update.messageId))
-                currentQuestion = bot.getLastQuestions(bot, update)
-                if (currentQuestion == null) deleteMessage(
-                    update, listOf(update.messageId - 2, update.messageId - 1, update.messageId)
-                )
+                checkNextQuestionAndSend(update, trainer)
+
             }
 
             STATISTICS_BUTTON -> {
                 deleteMessage(update, listOf(update.messageId - 1, update.messageId))
-                handleStatisticsButton(bot, update)
+                handleStatisticsButton(update, trainer)
             }
 
             RESET_BUTTON -> {
                 deleteMessage(update, listOf(update.messageId - 1, update.messageId))
-                handleResetButton(bot, update)
+                handleResetButton(update)
             }
 
             BACK_TO_MENU_BUTTON -> {
                 deleteMessage(update, listOf(update.messageId - 1, update.messageId))
-                bot.sendMenu(update)
+                sendMenu(update)
             }
         }
 
         if (update.callbackData.lowercase().startsWith(CALLBACK_DATA_ANSWER_)) {
             deleteMessage(update, listOf(update.messageId - 1, update.messageId))
-            handleAnswer(bot, update)
+            val answerId = update.callbackData.substringAfter(CALLBACK_DATA_ANSWER_).toInt()
+            if (trainer.checkAnswer(answerId)) {
+                sendMessage(update, "Правильно!")
+            } else {
+                sendMessage(
+                    update,
+                    "Неправильно! ${trainer.question?.correctAnswer?.questionWord} - " +
+                            "это ${trainer.question?.correctAnswer?.translate}"
+                )
+            }
+            checkNextQuestionAndSend(update, trainer)
         }
     }
 
     // Функция вывода статистики
-    private fun handleStatisticsButton(bot: TelegramBotService, update: UpdateData) {
-        val trainer = getUpdateTrainer(update)
+    private fun handleStatisticsButton(update: UpdateData, trainer: LearnWordsTrainer) {
         val statistics = trainer.getStatistics()
-        bot.sendMessage(
+        sendMessage(
             update,
             "$BICEPS Выучено ${statistics.learned} из ${statistics.total} слов | ${statistics.percent}%"
         )
-        bot.sendMenu(update)
+        sendMenu(update)
     }
 
     //Функция сброса прогресса
-    private fun handleResetButton(bot: TelegramBotService, update: UpdateData) {
+    private fun handleResetButton(update: UpdateData) {
         val trainer = getUpdateTrainer(update)
         trainer.resetProgress()
         sendMessage(update, "Прогресс сброшен")
-        bot.sendMenu(update)
-    }
-
-    //функция проверки ответов
-    private fun handleAnswer(bot: TelegramBotService, update: UpdateData) {
-        currentQuestion?.let { question ->
-            bot.checkNextQuestionAndSend(update, question)
-            currentQuestion = bot.getLastQuestions(bot, update)
-        }
+        sendMenu(update)
     }
 
     // Функция отправки сообщения пользователю в чате с ботом.
@@ -253,36 +252,13 @@ data class TelegramBotService(
         return getResponse(urlSendMessage, requestBodyString).body()
     }
 
-    // Функция получения нового Слова для изучения, если есть не выученные слова.
-    private fun getLastQuestions(bot: TelegramBotService, update: UpdateData): Question? {
-        val trainer = getUpdateTrainer(update)
-        val question = trainer.getNextQuestion()
-
-        return if (question == null) {
-            bot.sendMessage(update, "Все слова выучены.")
-            bot.sendMenu(update)
-            null
-        } else {
-            bot.sendQuestion(update, question)
-            question
-        }
-    }
-
     // Проверка на правильный ответ и отправка соответствующего сообщения пользователю в чате с ботом.
-    private fun checkNextQuestionAndSend(update: UpdateData, question: Question) {
-        val trainer = getUpdateTrainer(update)
-
-        val userClickedButton = if (update.callbackData.startsWith(CALLBACK_DATA_ANSWER_)) {
-            update.callbackData.substring(CALLBACK_DATA_ANSWER_.length).toIntOrNull()
-        } else null
-
-        if (trainer.checkAnswer(userClickedButton)) {
-            sendMessage(update, "Правильно!")
+    private fun checkNextQuestionAndSend(update: UpdateData, trainer: LearnWordsTrainer) {
+        val question = trainer.getNextQuestion()
+        if (question == null) {
+            sendMessage(update, "Все слова выучены.")
         } else {
-            sendMessage(
-                update, "Неправильно! " +
-                        "${question.correctAnswer.questionWord} - это ${question.correctAnswer.translate}"
-            )
+            sendQuestion(update, question)
         }
     }
 

@@ -20,12 +20,12 @@ data class Question(
     val correctAnswer: Word,
 )
 
-class LearnWordsTrainer(
+data class LearnWordsTrainer(
     private val fileName: String = "words.txt",
     private val countOfQuestionsWords: Int = 4,
     private val maxValueLearnedCount: Int = 3,
 ) {
-    private var question: Question? = null
+    var question: Question? = null
     private val dictionary = loadDictionary()
 
     fun getStatistics(): Statistics {
@@ -107,5 +107,4 @@ class LearnWordsTrainer(
         dictionary.forEach { it.correctAnswersCount = 0 }
         saveDictionary()
     }
-
 }

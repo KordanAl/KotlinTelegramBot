@@ -1,7 +1,6 @@
 private const val UPDATE_DELAY = 2000L
 
 fun main(args: Array<String>) {
-
     val bot = try {
         TelegramBotService(botToken = args[0])
     } catch (e: Exception) {
@@ -13,6 +12,6 @@ fun main(args: Array<String>) {
         Thread.sleep(UPDATE_DELAY)
         val update = bot.getUpdates() ?: continue
         println(update)
-        bot.handleUpdate(bot, update)
+        bot.handleUpdate(update)
     }
 }
