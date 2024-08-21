@@ -152,18 +152,17 @@ data class TelegramBotService(
 
             LEARN_WORDS_BUTTON -> {
                 deleteMessage(update, listOf(update.messageId - 1, update.messageId))
-                checkNextQuestionAndSend(update, trainer)
-
+                checkNextQuestionAndSend(trainer, update)
             }
 
             STATISTICS_BUTTON -> {
                 deleteMessage(update, listOf(update.messageId - 1, update.messageId))
-                handleStatisticsButton(update, trainer)
+                getStatisticAndsSend(trainer,update)
             }
 
             RESET_BUTTON -> {
                 deleteMessage(update, listOf(update.messageId - 1, update.messageId))
-                handleResetButton(update)
+                resetProgressAndSend(trainer,update)
             }
 
             BACK_TO_MENU_BUTTON -> {
@@ -174,22 +173,12 @@ data class TelegramBotService(
 
         if (update.callbackData.lowercase().startsWith(CALLBACK_DATA_ANSWER_)) {
             deleteMessage(update, listOf(update.messageId - 1, update.messageId))
-            val answerId = update.callbackData.substringAfter(CALLBACK_DATA_ANSWER_).toInt()
-            if (trainer.checkAnswer(answerId)) {
-                sendMessage(update, "Правильно!")
-            } else {
-                sendMessage(
-                    update,
-                    "Неправильно! ${trainer.question?.correctAnswer?.questionWord} - " +
-                            "это ${trainer.question?.correctAnswer?.translate}"
-                )
-            }
-            checkNextQuestionAndSend(update, trainer)
+            checkCallbackDataAndSend(trainer, update)
+            checkNextQuestionAndSend(trainer, update)
         }
     }
 
-    // Функция вывода статистики
-    private fun handleStatisticsButton(update: UpdateData, trainer: LearnWordsTrainer) {
+    private fun getStatisticAndsSend(trainer: LearnWordsTrainer, update: UpdateData) {
         val statistics = trainer.getStatistics()
         sendMessage(
             update,
@@ -198,12 +187,23 @@ data class TelegramBotService(
         sendMenu(update)
     }
 
-    //Функция сброса прогресса
-    private fun handleResetButton(update: UpdateData) {
-        val trainer = getUpdateTrainer(update)
+    private fun resetProgressAndSend(trainer: LearnWordsTrainer, update: UpdateData) {
         trainer.resetProgress()
         sendMessage(update, "Прогресс сброшен")
         sendMenu(update)
+    }
+
+    private fun checkCallbackDataAndSend(trainer: LearnWordsTrainer, update: UpdateData) {
+        val answerId = update.callbackData.substringAfter(CALLBACK_DATA_ANSWER_).toInt()
+        if (trainer.checkAnswer(answerId)) {
+            sendMessage(update, "Правильно!")
+        } else {
+            sendMessage(
+                update,
+                "Неправильно! ${trainer.question?.correctAnswer?.questionWord} - " +
+                        "это ${trainer.question?.correctAnswer?.translate}"
+            )
+        }
     }
 
     // Функция отправки сообщения пользователю в чате с ботом.
@@ -253,7 +253,7 @@ data class TelegramBotService(
     }
 
     // Проверка на правильный ответ и отправка соответствующего сообщения пользователю в чате с ботом.
-    private fun checkNextQuestionAndSend(update: UpdateData, trainer: LearnWordsTrainer) {
+    private fun checkNextQuestionAndSend(trainer: LearnWordsTrainer, update: UpdateData) {
         val question = trainer.getNextQuestion()
         if (question == null) {
             sendMessage(update, "Все слова выучены.")
