@@ -258,9 +258,10 @@ data class CallbackQuery(
             val requestBody = SendMessageRequest(
                 chatId = chatId,
                 text = """
-                $DOWNLOAD Загрузка словаря...  $GREEN_CHECK Словарь загружен!
+                $DOWNLOAD Загрузка словаря...
+                $GREEN_CHECK Словарь загружен!
                 
-                $STAR Добро пожаловать в основное меню! $STAR
+                $STAR Добро пожаловать в основное меню!
             """.trimIndent(),
                 replyMarkup = ReplyMarkup(
                     listOf(
