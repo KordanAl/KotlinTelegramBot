@@ -73,14 +73,6 @@ data class InlineKeyboard(
     val text: String,
 )
 
-data class UpdateData(
-    val updateId: Long,
-    val chatId: Long,
-    val messageId: Long,
-    val message: String,
-    val callbackData: String,
-)
-
 data class TelegramBotService(
     private val botToken: String,
     private var lastUpdateId: Long = 0L,
@@ -110,96 +102,95 @@ data class TelegramBotService(
     private val json = Json { ignoreUnknownKeys = true }
 
     // Функция получения актуального тренера для каждого пользователя
-    private fun getUpdateTrainer(update: UpdateData) = trainers.getOrPut(update.chatId) {
-        LearnWordsTrainer("${update.chatId}.txt")
+    private fun getUpdateTrainer(chatId: Long) = trainers.getOrPut(chatId) {
+        LearnWordsTrainer("${chatId}.txt")
     }
 
     // Функция получения обновления и данных если они пришли с ответом.
-    fun getUpdates(): UpdateData? {
+    fun getUpdates(): Unit? {
         val urlGetUpdates = "$BASE_URL/bot$botToken/getUpdates?offset=$lastUpdateId"
         val responseString: String = getResponse(urlGetUpdates).body()
         println("Response from getUpdates: $responseString")
 
         val response: Response = json.decodeFromString(responseString)
-        if (response.result.isEmpty()) return null
 
-        val sortedUpdates = response.result.sortedBy { it.updateId }
-        val firstUpdate = sortedUpdates.firstOrNull() ?: return null
-
-        val chatId = firstUpdate.message?.chat?.id ?: firstUpdate.callbackQuery?.message?.chat?.id
-        ?: return null
-
-        lastUpdateId = sortedUpdates.last().updateId + 1
-
-        return UpdateData(
-            updateId = firstUpdate.updateId,
-            chatId = chatId,
-            messageId = firstUpdate.callbackQuery?.message?.messageId ?: 0L,
-            message = firstUpdate.message?.text ?: "",
-            callbackData = firstUpdate.callbackQuery?.data ?: "",
-        )
+        return if (response.result.isEmpty()) {
+            null
+        } else {
+            val sortedUpdates = response.result.sortedBy { it.updateId }
+            sortedUpdates.forEach { handleUpdate(it) }
+            lastUpdateId = sortedUpdates.last().updateId + 1
+        }
     }
 
     // Функция для обработки обновления и вывода соответствующей информации для каждого пользователя
-    fun handleUpdate(update: UpdateData) {
-        val trainer = getUpdateTrainer(update)
+    private fun handleUpdate(update: Update) {
 
-        if (update.message.lowercase() == "/start") {
-            sendMessage(update, "Привет!")
-            sendMenu(update)
-        }
-        when (update.callbackData.lowercase()) {
+        val chatId = update.message?.chat?.id ?: update.callbackQuery?.message?.chat?.id
+        val messageId = update.callbackQuery?.message?.messageId ?: 0L
+        val message = update.message?.text ?: ""
+        val callbackData = update.callbackQuery?.data ?: ""
 
-            LEARN_WORDS_BUTTON -> {
-                deleteMessage(update, listOf(update.messageId - 1, update.messageId))
-                checkNextQuestionAndSend(trainer, update)
+        if (chatId != null) {
+            val trainer = getUpdateTrainer(chatId)
+
+            if (message.lowercase() == "/start") {
+                sendMessage(chatId, "Привет!")
+                sendMenu(chatId)
+            }
+            when (callbackData.lowercase()) {
+
+                LEARN_WORDS_BUTTON -> {
+                    deleteMessage(message, chatId, listOf(messageId - 1, messageId))
+                    checkNextQuestionAndSend(trainer, chatId)
+                }
+
+                STATISTICS_BUTTON -> {
+                    deleteMessage(message, chatId, listOf(messageId - 1, messageId))
+                    getStatisticAndSend(trainer, chatId)
+                }
+
+                RESET_BUTTON -> {
+                    deleteMessage(message, chatId, listOf(messageId - 1, messageId))
+                    resetProgressAndSend(trainer, chatId)
+                }
+
+                BACK_TO_MENU_BUTTON -> {
+                    deleteMessage(message, chatId, listOf(messageId - 1, messageId))
+                    sendMenu(chatId)
+                }
             }
 
-            STATISTICS_BUTTON -> {
-                deleteMessage(update, listOf(update.messageId - 1, update.messageId))
-                getStatisticAndSend(trainer,update)
+            if (callbackData.lowercase().startsWith(CALLBACK_DATA_ANSWER_)) {
+                deleteMessage(message, chatId, listOf(messageId - 1, messageId))
+                checkCallbackDataAndSend(trainer, chatId, callbackData)
+                checkNextQuestionAndSend(trainer, chatId)
             }
-
-            RESET_BUTTON -> {
-                deleteMessage(update, listOf(update.messageId - 1, update.messageId))
-                resetProgressAndSend(trainer,update)
-            }
-
-            BACK_TO_MENU_BUTTON -> {
-                deleteMessage(update, listOf(update.messageId - 1, update.messageId))
-                sendMenu(update)
-            }
-        }
-
-        if (update.callbackData.lowercase().startsWith(CALLBACK_DATA_ANSWER_)) {
-            deleteMessage(update, listOf(update.messageId - 1, update.messageId))
-            checkCallbackDataAndSend(trainer, update)
-            checkNextQuestionAndSend(trainer, update)
         }
     }
 
-    private fun getStatisticAndSend(trainer: LearnWordsTrainer, update: UpdateData) {
+    private fun getStatisticAndSend(trainer: LearnWordsTrainer, chatId: Long) {
         val statistics = trainer.getStatistics()
         sendMessage(
-            update,
+            chatId,
             "$BICEPS Выучено ${statistics.learned} из ${statistics.total} слов | ${statistics.percent}%"
         )
-        sendMenu(update)
+        sendMenu(chatId)
     }
 
-    private fun resetProgressAndSend(trainer: LearnWordsTrainer, update: UpdateData) {
+    private fun resetProgressAndSend(trainer: LearnWordsTrainer, chatId: Long) {
         trainer.resetProgress()
-        sendMessage(update, "Прогресс сброшен")
-        sendMenu(update)
+        sendMessage(chatId, "Прогресс сброшен")
+        sendMenu(chatId)
     }
 
-    private fun checkCallbackDataAndSend(trainer: LearnWordsTrainer, update: UpdateData) {
-        val answerId = update.callbackData.substringAfter(CALLBACK_DATA_ANSWER_).toInt()
+    private fun checkCallbackDataAndSend(trainer: LearnWordsTrainer, chatId: Long, callbackData: String) {
+        val answerId = callbackData.substringAfter(CALLBACK_DATA_ANSWER_).toInt()
         if (trainer.checkAnswer(answerId)) {
-            sendMessage(update, "Правильно!")
+            sendMessage(chatId, "Правильно!")
         } else {
             sendMessage(
-                update,
+                chatId,
                 "Неправильно! ${trainer.question?.correctAnswer?.questionWord} - " +
                         "это ${trainer.question?.correctAnswer?.translate}"
             )
@@ -207,30 +198,30 @@ data class TelegramBotService(
     }
 
     // Функция отправки сообщения пользователю в чате с ботом.
-    private fun sendMessage(update: UpdateData, text: String): String {
+    private fun sendMessage(chatId: Long, text: String): String {
         val encod = URLEncoder.encode(text, StandardCharsets.UTF_8.toString())
-        val urlSendMessage = "$BASE_URL/bot$botToken/sendMessage?chat_id=${update.chatId}&text=${encod}"
+        val urlSendMessage = "$BASE_URL/bot$botToken/sendMessage?chat_id=${chatId}&text=${encod}"
         return getResponse(urlSendMessage).body()
     }
 
     //Функция удаления сообщения бота, если нужно корректировать messageId
-    private fun deleteMessage(update: UpdateData, listMessageId: List<Long>) {
+    private fun deleteMessage(message: String, chatId: Long, listMessageId: List<Long>) {
         for (messageId in listMessageId) {
             // Проверяем, чтобы не удалять сообщение с командой /start
-            if (update.message.lowercase() == "/start") {
+            if (message.lowercase() == "/start") {
                 continue
             }
-            val urlDeleteMessage = "$BASE_URL/bot$botToken/deleteMessage?chat_id=${update.chatId}&" +
+            val urlDeleteMessage = "$BASE_URL/bot$botToken/deleteMessage?chat_id=${chatId}&" +
                     "message_id=${messageId}"
             getResponse(urlDeleteMessage).body()
         }
     }
 
     // Функция вывода основного меню пользователю в чате с ботом.
-    private fun sendMenu(update: UpdateData): String {
+    private fun sendMenu(chatId: Long): String {
         val urlSendMessage = "$BASE_URL/bot$botToken/sendMessage"
         val requestBody = SendMessageRequest(
-            chatId = update.chatId,
+            chatId = chatId,
             text = """
                 $DOWNLOAD Загрузка словаря...   $GREEN_CHECK Словарь загружен!
                 
@@ -253,20 +244,20 @@ data class TelegramBotService(
     }
 
     // Проверка на правильный ответ и отправка соответствующего сообщения пользователю в чате с ботом.
-    private fun checkNextQuestionAndSend(trainer: LearnWordsTrainer, update: UpdateData) {
+    private fun checkNextQuestionAndSend(trainer: LearnWordsTrainer, chatId: Long) {
         val question = trainer.getNextQuestion()
         if (question == null) {
-            sendMessage(update, "Все слова выучены.")
+            sendMessage(chatId, "Все слова выучены.")
         } else {
-            sendQuestion(update, question)
+            sendQuestion(chatId, question)
         }
     }
 
     // Функция отправки Слова для изучения и его вариантов ответов
-    private fun sendQuestion(update: UpdateData, question: Question): String? {
+    private fun sendQuestion(chatId: Long, question: Question): String? {
         val urlSendMessage = "$BASE_URL/bot$botToken/sendMessage"
         val requestBody = SendMessageRequest(
-            chatId = update.chatId,
+            chatId = chatId,
             text = "Переведи слово: $CHECK_RIGHT ${question.correctAnswer.questionWord} $CHECK_LEFT",
             replyMarkup = ReplyMarkup(
                 listOf(

@@ -12,6 +12,5 @@ fun main(args: Array<String>) {
         Thread.sleep(UPDATE_DELAY)
         val update = bot.getUpdates() ?: continue
         println(update)
-        bot.handleUpdate(update)
     }
 }
