@@ -157,7 +157,7 @@ data class TelegramBotService(
 
             STATISTICS_BUTTON -> {
                 deleteMessage(update, listOf(update.messageId - 1, update.messageId))
-                getStatisticAndsSend(trainer,update)
+                getStatisticAndSend(trainer,update)
             }
 
             RESET_BUTTON -> {
@@ -178,7 +178,7 @@ data class TelegramBotService(
         }
     }
 
-    private fun getStatisticAndsSend(trainer: LearnWordsTrainer, update: UpdateData) {
+    private fun getStatisticAndSend(trainer: LearnWordsTrainer, update: UpdateData) {
         val statistics = trainer.getStatistics()
         sendMessage(
             update,
