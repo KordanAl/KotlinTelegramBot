@@ -12,7 +12,7 @@ fun main(args: Array<String>) {
     try {
         while (true) {
             Thread.sleep(UPDATE_DELAY)
-            bot.getUpdates() ?: continue
+            bot.getUpdates()
         }
     } catch (e: Exception) {
         println("Нет ответа от Telegram!")
